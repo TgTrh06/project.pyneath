@@ -20,6 +20,7 @@ const schema = z.object({
   API_DB_TIMEOUT_MS: integer(100, 30000).default(3000),
   API_ASSISTANCE_PROVIDER: z.enum(['disabled', 'openai', 'local', 'gemini', 'openrouter', 'beeknoee']).default('disabled'),
   API_ASSISTANCE_DIAGNOSTICS: z.enum(['true', 'false']).default('false'),
+  API_ASSISTANCE_QUALITY_V2: z.enum(['true', 'false']).default('false'),
   BEEKNOEE_API_KEY: z.string().trim().min(1).optional(),
   BEEKNOEE_MODEL: z.enum(['bee-tok/claude-haiku-5-5', 'bee/gpt-6-luna']).default('bee/gpt-6-luna'),
   BEEKNOEE_RESPONSE_FORMAT: z.enum(['json_schema', 'json_object', 'prompt']).default('json_schema'),
@@ -54,6 +55,8 @@ export function readApiConfig(env: NodeJS.ProcessEnv = process.env) {
   }
   if (result.data.API_ASSISTANCE_PROVIDER === 'openrouter' && !result.data.OPENROUTER_API_KEY) throw new ConfigError(['OPENROUTER_API_KEY']);
   if (result.data.API_ASSISTANCE_PROVIDER === 'beeknoee' && !result.data.BEEKNOEE_API_KEY) throw new ConfigError(['BEEKNOEE_API_KEY']);
+  if (result.data.API_ASSISTANCE_QUALITY_V2 === 'true' && result.data.API_ASSISTANCE_PROVIDER !== 'beeknoee')
+    throw new ConfigError(['API_ASSISTANCE_QUALITY_V2']);
   return Object.freeze(result.data);
 }
 

@@ -14,6 +14,7 @@ import { sessionHash } from '../src/modules/identity/infrastructure/identity-cry
 import type { IdentityRepository } from '../src/modules/identity/application/identity.ports';
 import { FOCUS_ACCESS } from '../src/modules/focus/public-api';
 import { PREFERENCES_ACCESS } from '../src/modules/preferences/public-api';
+import { PACT_ACCESS } from '../src/modules/pact/public-api';
 import { PresenceGateway } from '../src/modules/presence/presentation/presence.gateway';
 import type { Request, Response } from 'express';
 
@@ -41,7 +42,7 @@ async function setup(t: TestContext, ttl = 60000) {
   };
   const module = await Test.createTestingModule({ providers: [PresenceGateway,
     { provide: IDENTITY_ACCESS, useValue: identity.core }, { provide: FOCUS_ACCESS, useValue: focus },
-    { provide: PREFERENCES_ACCESS, useValue: { presenceSharingChanges: new Subject<string>() } }, { provide: API_CONFIG, useValue: config },
+    { provide: PREFERENCES_ACCESS, useValue: { presenceSharingChanges: new Subject<string>() } }, { provide: PACT_ACCESS, useValue: { changes: new Subject() } }, { provide: API_CONFIG, useValue: config },
   ] }).compile();
   const app = module.createNestApplication({ logger: false });
   app.useWebSocketAdapter(new PineSocketAdapter(app, config)); await app.listen(0, '127.0.0.1');

@@ -18,6 +18,7 @@ import { AssistanceContext } from './infrastructure/assistance-context';
 import { FocusModule } from '../focus/focus.module';
 import { SeedModule } from '../seed/seed.module';
 import { AssistanceToolsController } from './presentation/assistance-tools.controller';
+import { assistanceCandidatePromptRevision, assistancePromptRevision } from '@pyneath/contracts';
 
 @Module({
   imports: [AnalyticsModule, FocusModule, SeedModule],
@@ -28,7 +29,8 @@ import { AssistanceToolsController } from './presentation/assistance-tools.contr
     { provide: AssistanceService, inject: [API_CONFIG, ASSISTANCE_PROVIDER, ANALYTICS, AssistanceContext],
       useFactory: (config: ApiConfig, provider: AssistanceProvider, analytics: Analytics, context: AssistanceContext) => new AssistanceService(assistanceConfiguration(config), provider, analytics, ['gemini', 'openrouter', 'beeknoee'].includes(config.API_ASSISTANCE_PROVIDER) ? context : undefined,
         { provider: config.API_ASSISTANCE_PROVIDER, model: config.API_ASSISTANCE_PROVIDER === 'beeknoee' ? config.BEEKNOEE_MODEL : config.API_ASSISTANCE_PROVIDER === 'openrouter' ? config.OPENROUTER_MODEL : config.API_ASSISTANCE_PROVIDER === 'gemini' ? config.GEMINI_MODEL ?? 'unset' : 'none',
-          promptRevision: config.API_ASSISTANCE_PROVIDER === 'beeknoee' ? 'pyneath-assistance-v2.1-beeknoee-v1' : config.API_ASSISTANCE_PROVIDER === 'openrouter' ? 'pyneath-assistance-v2.1-openrouter-v1' : 'pyneath-assistance-v2.1',
+          promptRevision: config.API_ASSISTANCE_PROVIDER === 'beeknoee' ? config.API_ASSISTANCE_QUALITY_V2 === 'true' ? `${assistanceCandidatePromptRevision}-beeknoee-v3` : `${assistancePromptRevision}-beeknoee-v2` : config.API_ASSISTANCE_PROVIDER === 'openrouter' ? `${assistancePromptRevision}-openrouter-v2` : assistancePromptRevision,
+          policyRevision: config.API_ASSISTANCE_PROVIDER === 'beeknoee' && config.API_ASSISTANCE_QUALITY_V2 === 'true' ? 'assistance-policy-v1.1' : 'assistance-policy-v1',
           diagnostics: config.API_ASSISTANCE_DIAGNOSTICS === 'true' }) },
     OpenAiAssistanceProvider,
     LocalAssistanceProvider,

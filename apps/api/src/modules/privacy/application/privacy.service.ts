@@ -10,15 +10,15 @@ export class PrivacyService {
     private readonly transactions: UnitOfWork, private readonly clock: Clock) {}
   async export(accountId: string) {
     const { profile: profiles, preferences: settings, seeds, camps, pacts: pactData, focus, memory } = this.sources;
-    const [profile, preferences, seed, memberships, declinedInvites, pacts, sessions, pactReminders] = await Promise.all([
+    const [profile, preferences, seed, memberships, declinedInvites, pacts, sessions, pactReminders, studySteps] = await Promise.all([
       profiles.get(accountId), settings.exportPreferences(accountId), seeds.get(accountId),
       camps.exportMemberships(accountId), camps.exportDeclines(accountId), pactData.exportPacts(accountId),
-      focus.exportSessions(accountId), pactData.exportReminders(accountId),
+      focus.exportSessions(accountId), pactData.exportReminders(accountId), focus.exportStudySteps(accountId),
     ]);
     const milestones = await memory.list(accountId);
     const personalMemories = await memory.exportPersonal(accountId);
     return { exportedAt: this.clock.now().toISOString(), profile, preferences, openSeed: seed,
-      camps: memberships, declinedCampInvites: declinedInvites, pacts, pactReminders, sessions, milestones, personalMilestones: personalMemories };
+      camps: memberships, declinedCampInvites: declinedInvites, pacts, pactReminders, sessions, studySteps, milestones, personalMilestones: personalMemories };
   }
   async remove(accountId: string, password: string) {
     const email = await this.accounts.email(accountId) ?? '';

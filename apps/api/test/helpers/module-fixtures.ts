@@ -33,6 +33,7 @@ import { decodeCursor, encodeCursor } from '../../src/platform/http/pagination';
 import type { Analytics } from '../../src/modules/analytics/public-api';
 import type { CampAccess } from '../../src/modules/camp/public-api';
 import { PactService } from '../../src/modules/pact/application/pact.service';
+import type { PactEvents } from '../../src/modules/pact/application/pact.ports';
 import { FocusService } from '../../src/modules/focus/application/focus.service';
 
 // A fixture database has one transaction owner, just like the NestJS DatabaseModule singleton.
@@ -47,9 +48,9 @@ export function createCamps(database: DatabaseService, analytics: Analytics) {
   return new CampService(new DrizzleCampRepository(transactions), transactions, analytics,
     { now: () => new Date() }, inviteTokens, { decode: decodeCursor, encode: encodeCursor });
 }
-export function createPacts(database: DatabaseService, camps: CampAccess, analytics: Analytics) {
+export function createPacts(database: DatabaseService, camps: CampAccess, analytics: Analytics, events?: PactEvents) {
   const transactions = transactionsFor(database);
-  return new PactService(new DrizzlePactRepository(transactions), transactions, camps, analytics, { now: () => new Date() }, { decode: decodeCursor, encode: encodeCursor }, createPreferences(database));
+  return new PactService(new DrizzlePactRepository(transactions), transactions, camps, analytics, { now: () => new Date() }, { decode: decodeCursor, encode: encodeCursor }, createPreferences(database), events);
 }
 export function createFocus(database: DatabaseService, pacts: PactAccess, analytics: Analytics) {
   const transactions = transactionsFor(database);

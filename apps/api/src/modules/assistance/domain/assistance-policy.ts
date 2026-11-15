@@ -8,6 +8,10 @@ export function requestText(input: AssistanceRequest) {
 export function isUnsafeSuggestion(value: string) {
   return boundaryWords.test(value) || /(?:^|\n)\s*(?:[-*•]|\d+[.)])\s+/.test(value) || value.includes('\n') || /(?:bạn đã hoàn thành|you have completed)/i.test(value);
 }
+// Reject only a narrow class of self-delegating text. Broader relevance requires human evaluation.
+export function isGenericAssistanceSuggestion(value: string) {
+  return /^(?:khi quay lại,?\s*(?:hãy\s+)?)?(?:viết|ghi|chọn|nghĩ|tìm)(?:\s+ra)?\s+(?:một\s+)?(?:việc|bước|hành động)(?:\s+(?:nhỏ(?:\s+nhất)?|tiếp\s+theo|quan\s+trọng(?:\s+nhất)?))?(?:\s|[.!?]|$)/iu.test(value.trim());
+}
 export function parseLocalOutput(input: AssistanceRequest, value: unknown) {
   const output = assistanceOutputSchema.parse(value);
   if (output.capability !== input.capability) throw new Error('Capability mismatch');

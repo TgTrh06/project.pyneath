@@ -38,6 +38,8 @@ test('Gemini generates each capability with one bounded external request and no 
       assert.equal(new Headers(options?.headers).get('x-goog-api-key'), 'fixture-key-not-real');
       assert.equal(options?.redirect, 'error');
       const body = JSON.parse(String(options?.body)); assert.equal(body.generationConfig.responseMimeType, 'application/json');
+      assert.match(body.systemInstruction.parts[0].text, /Công nghệ thông tin và kỹ thuật phần mềm/);
+      assert.match(body.systemInstruction.parts[0].text, /không cố gán một việc ngoài CNTT/i);
       assert.equal(body.tools, undefined); assert.equal(body.contents.length, 1);
       return Response.json(completion(output));
     });

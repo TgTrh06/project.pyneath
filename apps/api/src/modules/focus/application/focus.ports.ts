@@ -1,6 +1,6 @@
 import type { TransactionContext } from '../../../shared/kernel/unit-of-work';
 import type { EventChannel, EventSource } from '../../../shared/kernel/events';
-import type { FocusSession, FocusParticipant, FocusSnapshot, ParticipantView, SessionHistory, Presence, PresenceChange, SoloInput, CheckoutInput, Outcome } from '../domain/focus';
+import type { FocusSession, FocusParticipant, FocusSnapshot, ParticipantView, SessionHistory, Presence, PresenceChange, SoloInput, CheckoutInput, Outcome, StudyStepInput, StudyStepRecord } from '../domain/focus';
 
 export interface FocusAccess {
   readonly changes: EventSource<string>;
@@ -40,8 +40,15 @@ export interface FocusRepository extends FocusPrivacyAccess {
   joinedAccountIds(sessionId: string): Promise<string[]>;
   expired(now: Date): Promise<string[]>;
   activePacts(): Promise<string[]>;
+  saveStudyStep(sessionId: string, accountId: string, input: StudyStepInput, now: Date, context: TransactionContext): Promise<StudyStepRecord>;
+  hasStudyStep(sessionId: string, accountId: string, context: TransactionContext): Promise<boolean>;
+  studySteps(accountId: string, offset: number): Promise<StudyStepRecord[]>;
+  studyCounts(accountId: string, timezone: string, now: Date): Promise<{ completedSteps: number; recordedSessions: number }>;
+  studyTimeline(accountId: string, timezone: string, now: Date, days: number): Promise<Array<{ date: string; completed: number; partial: number; notStarted: number; soloSessions: number; campSessions: number }>>;
+  unrecordedSoloSessions(accountId: string): Promise<Array<{ id: string; intention: string | null; startedAt: Date }>>;
 }
 
 export interface FocusPrivacyAccess {
   exportSessions(accountId: string): Promise<Array<Pick<FocusSession, 'id' | 'kind' | 'startedAt' | 'endsAt' | 'status'> & Pick<FocusParticipant, 'intention' | 'outcome'>>>;
+  exportStudySteps(accountId: string): Promise<StudyStepRecord[]>;
 }

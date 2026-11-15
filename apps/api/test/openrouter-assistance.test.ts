@@ -40,6 +40,8 @@ test('each capability uses a single bounded JSON request, with price/privacy rou
       assert.ok(branches.every((branch: any) => branch.additionalProperties === false && branch.properties.capability.const === capability));
       assert.ok(branches.filter((branch: any) => branch.properties.message).every((branch: any) => !branch.properties.activationStep && !branch.properties.recoveryStep && !branch.properties.openSeedDraft));
       assert.equal(body.messages.length, 2); assert.equal(JSON.parse(body.messages[1].content).authorizedContext, undefined);
+      assert.match(body.messages[0].content, /Công nghệ thông tin và kỹ thuật phần mềm/);
+      assert.match(body.messages[0].content, /cấu trúc dữ liệu và giải thuật/);
       return Response.json(completion(output));
     });
     assert.equal((await provider().generate(request)).kind, 'validated'); assert.equal(calls, 1); t.mock.restoreAll();

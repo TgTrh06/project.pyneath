@@ -13,7 +13,7 @@
     "prelint": "pnpm --filter @pyneath/contracts build",
     "lint": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit && tsc -p tsconfig.tooling.json --noEmit && node scripts/check-boundaries.cjs",
     "pretest": "pnpm --filter @pyneath/contracts build",
-    "test": "node scripts/clean-test-output.cjs && tsc -p tsconfig.test.json && node --test dist-test/test/*.test.js"
+    "test": "node --test scripts/*.test.cjs && node scripts/clean-test-output.cjs && tsc -p tsconfig.test.json && node --test dist-test/test/*.test.js"
   },
   "dependencies": {
     "@pyneath/contracts": "workspace:*",

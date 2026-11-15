@@ -6,11 +6,49 @@ import type { CampAccess } from '../../camp/public-api';
 import type { PactAccess } from '../../pact/public-api';
 import type { SeedAccess } from '../../seed/public-api';
 import type { SharedMemory } from '../../memory/public-api';
-import { ActiveSessionCollision, nextPresence, visibleParticipants, type CheckoutInput, type FocusSession, type FocusSnapshot, type Presence, type SoloInput } from '../domain/focus';
+import { ActiveSessionCollision, nextPresence, visibleParticipants, type CheckoutInput, type FocusSession, type FocusSnapshot, type Presence, type SoloInput, type StudyStepInput } from '../domain/focus';
 import type { FocusAccess, FocusEvents, FocusRepository } from './focus.ports';
 
 export class FocusService implements FocusAccess {
   exportSessions(accountId: string) { return this.repository.exportSessions(accountId); }
+  exportStudySteps(accountId: string) { return this.repository.exportStudySteps(accountId); }
+  async studyDashboard(accountId: string, timezone: string, offset: number, periodDays: 7 | 30 = 7) {
+    const now = this.clock.now();
+    const [counts, rows, openSeed, unrecordedSessions, timeline] = await Promise.all([
+      this.repository.studyCounts(accountId, timezone, now), this.repository.studySteps(accountId, offset),
+      this.seeds.get(accountId), this.repository.unrecordedSoloSessions(accountId),
+      this.repository.studyTimeline(accountId, timezone, now, periodDays * 2)
+    ]);
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+    const part = (type: string) => Number(parts.find(value => value.type === type)?.value);
+    const todayDate = new Date(Date.UTC(part('year'), part('month') - 1, part('day')));
+    const byDate = new Map(timeline.map(day => [day.date, day]));
+    const days = Array.from({ length: periodDays * 2 }, (_, index) => {
+      const date = new Date(todayDate.getTime() - (periodDays * 2 - index - 1) * 86400000).toISOString().slice(0, 10);
+      return byDate.get(date) ?? { date, completed: 0, partial: 0, notStarted: 0, soloSessions: 0, campSessions: 0 };
+    });
+    return { ...counts, timezone, steps: rows.slice(0, 10), hasMore: rows.length > 10, openSeed, unrecordedSessions,
+      progress: { periodDays, today: todayDate.toISOString().slice(0, 10), days } };
+  }
+  async recordStudyStep(sessionId: string, accountId: string, input: StudyStepInput & { openSeed?: string | null }) {
+    return this.transactions.run(async context => {
+      const session = await this.repository.find(sessionId, context, true);
+      const mine = await this.repository.participant(sessionId, accountId, context, true);
+      if (!session || session.kind !== 'solo' || !mine) throw new BusinessError('NOT_FOUND');
+      if (session.status === 'active' && session.endsAt > this.clock.now()) throw new BusinessError('STATE_CONFLICT');
+      const { openSeed, ...step } = input;
+      const alreadyRecorded = await this.repository.hasStudyStep(sessionId, accountId, context);
+      if (alreadyRecorded && openSeed !== undefined) {
+        const currentSeed = await this.seeds.get(accountId, context);
+        if ((currentSeed?.text ?? null) !== openSeed) throw new BusinessError('STATE_CONFLICT');
+      }
+      const saved = await this.repository.saveStudyStep(sessionId, accountId, step, this.clock.now(), context);
+      // A replay of the original recording must not overwrite a newer Open Seed.
+      if (!alreadyRecorded && openSeed === null) await this.seeds.remove(accountId, context);
+      else if (!alreadyRecorded && openSeed != null) await this.seeds.upsert(accountId, { text: openSeed, sourceSessionId: sessionId }, context);
+      return saved;
+    });
+  }
   readonly changes;
   readonly presenceChanges;
   constructor(private readonly repository: FocusRepository, private readonly transactions: UnitOfWork,
@@ -68,12 +106,12 @@ export class FocusService implements FocusAccess {
       if (pact.creatorAccountId !== accountId || participant.response !== 'accepted') throw new BusinessError('FORBIDDEN');
       if (pact.startedSessionId) {
         if (pact.status !== 'active') throw new BusinessError('STATE_CONFLICT');
-        return { id: pact.startedSessionId, expired: false };
+        return { id: pact.startedSessionId, expired: false, created: false };
       }
       const now = this.clock.now();
       if (pact.status === 'scheduled' && pact.startsAt.getTime() + 1800000 < now.getTime()) {
         await this.pacts.expire(pactId, now, context);
-        return { id: null, expired: true };
+        return { id: null, expired: true, created: false };
       }
       if (!group || group.status !== 'active' || pact.status !== 'scheduled') throw new BusinessError('STATE_CONFLICT');
       if (now.getTime() < pact.startsAt.getTime() - 600000 || now.getTime() > pact.startsAt.getTime() + 1800000) throw new BusinessError('STATE_CONFLICT');
@@ -81,9 +119,13 @@ export class FocusService implements FocusAccess {
       const session = await this.repository.create({ kind: 'pact', pactId, campId: pact.campId, startedByAccountId: accountId, durationMinutes: pact.durationMinutes, startedAt: now, endsAt: new Date(now.getTime() + pact.durationMinutes * 60000), requestKey }, context);
       await this.repository.addParticipant(session.id, accountId, context);
       await this.pacts.activate(pactId, session.id, now, context);
-      return { id: session.id, expired: false };
+      return { id: session.id, expired: false, created: true };
     });
     if (result.expired || !result.id) throw new BusinessError('STATE_CONFLICT');
+    if (result.created) {
+      try { await this.pacts.announceStarted(pactId, result.id); }
+      catch { /* Connected clients can recover by reloading active Pacts after reconnect. */ }
+    }
     this.events.changes.next(result.id);
     return this.snapshot(result.id, accountId);
   }
@@ -159,14 +201,21 @@ export class FocusService implements FocusAccess {
       if (current.pactId) await this.pacts.requireParticipant(current.pactId, accountId, context);
       const mine = await this.repository.participant(sessionId, accountId, context, true);
       if (!mine) throw new BusinessError('NOT_FOUND');
+      if (input.studyStep && current.kind !== 'solo') throw new BusinessError('VALIDATION_FAILED');
       if (mine.presence === 'checked_out' || current.status !== 'active') return { changed: false, finished: false };
       const now = this.clock.now();
       if (current.endsAt <= now) {
         await this.repository.complete(sessionId, now, context, 'expired');
         await this.stopParticipantsAndPact(current, now, context);
+        if (input.studyStep && current.kind === 'solo') {
+          await this.repository.saveStudyStep(sessionId, accountId, input.studyStep, now, context);
+          if (input.openSeed === null) await this.seeds.remove(accountId, context);
+          else if (input.openSeed !== undefined) await this.seeds.upsert(accountId, { text: input.openSeed, sourceSessionId: sessionId }, context);
+        }
         return { changed: false, finished: true };
       }
       await this.repository.checkOutParticipant(mine.id, input.outcome, now, context);
+      if (input.studyStep) await this.repository.saveStudyStep(sessionId, accountId, input.studyStep, now, context);
       if (input.openSeed === null) await this.seeds.remove(accountId, context);
       else if (input.openSeed !== undefined) await this.seeds.upsert(accountId, { text: input.openSeed, sourceSessionId: sessionId }, context);
       const remaining = await this.repository.hasRemaining(sessionId, context);

@@ -7,13 +7,26 @@ import type { TransactionContext, UnitOfWork } from '../../../shared/kernel/unit
 import type { Analytics } from '../../analytics/public-api';
 import type { CampAccess } from '../../camp/public-api';
 import { pactExpiryTime, pactIsExpired, type CreatePact, type DueReminder } from '../domain/pact';
-import type { PactAccess, PactRepository } from './pact.ports';
+import type { PactAccess, PactEvents, PactRepository, PactChangeKind } from './pact.ports';
 
 export class PactService implements PactAccess {
+  readonly changes;
   exportPacts(accountId: string) { return this.repository.exportPacts(accountId); }
   exportReminders(accountId: string) { return this.repository.exportReminders(accountId); }
   constructor(private readonly repository: PactRepository, private readonly transactions: UnitOfWork, private readonly camps: CampAccess,
-    private readonly analytics: Analytics, private readonly clock: Clock, private readonly cursors: CursorCodec, private readonly preferences: PreferencesAccess) {}
+    private readonly analytics: Analytics, private readonly clock: Clock, private readonly cursors: CursorCodec, private readonly preferences: PreferencesAccess,
+    private readonly events?: PactEvents) {
+    this.changes = { subscribe: events?.changes.subscribe.bind(events.changes) ?? (() => ({ unsubscribe() {} })) };
+  }
+  private publish(accountIds: string[], pactId: string, change: PactChangeKind, sessionId?: string) {
+    const recipients = [...new Set(accountIds)];
+    if (recipients.length) this.events?.changes.next({ accountIds: recipients, pactId, change, ...(sessionId ? { sessionId } : {}) });
+  }
+  async announceStarted(pactId: string, sessionId: string) {
+    const pact = await this.raw(pactId);
+    const participants = await this.repository.participants(pactId);
+    this.publish(participants.filter(person => person.response === 'accepted' && person.accountId !== pact.creatorAccountId).map(person => person.accountId), pactId, 'started', sessionId);
+  }
   lock(pactId: string, context: TransactionContext) { return this.repository.find(pactId, context, true); }
   expire(pactId: string, now: Date, context: TransactionContext) { return this.repository.setStatus(pactId, 'expired', now, context); }
   activate(pactId: string, sessionId: string, now: Date, context: TransactionContext) { return this.repository.activate(pactId, sessionId, now, context); }
@@ -49,7 +62,10 @@ export class PactService implements PactAccess {
       await this.repository.addParticipants(requested.map(accountId => ({ pactId: pact.id, accountId, response: accountId === actorId ? 'accepted' : 'invited', respondedAt: accountId === actorId ? this.clock.now() : null })), context);
       return pact.id;
     });
-    if (created) await this.analytics.record(actorId, 'pact_created', pactId, { durationMinutes: input.durationMinutes });
+    if (created) {
+      this.publish(requested.filter(id => id !== actorId), pactId, 'invited');
+      await this.analytics.record(actorId, 'pact_created', pactId, { durationMinutes: input.durationMinutes });
+    }
     return this.get(pactId, actorId);
   }
   async requireParticipant(pactId: string, accountId: string, context?: TransactionContext) {
@@ -89,7 +105,10 @@ export class PactService implements PactAccess {
       return { changed: true, expired: false };
     });
     if (result.expired) throw new BusinessError('STATE_CONFLICT');
-    if (result.changed && response === 'accepted') await this.analytics.record(actorId, 'pact_accepted', pactId);
+    if (result.changed) {
+      if (hint.creatorAccountId) this.publish([hint.creatorAccountId], pactId, 'response_changed');
+      if (response === 'accepted') await this.analytics.record(actorId, 'pact_accepted', pactId);
+    }
     return this.get(pactId, actorId);
   }
   async cancel(pactId: string, actorId: string) {
@@ -106,11 +125,17 @@ export class PactService implements PactAccess {
         await this.repository.setStatus(pactId, 'expired', now, context);
         return { changed: false, expired: true };
       }
+      const recipients = (await this.repository.participants(pactId))
+        .map(person => person.accountId)
+        .filter(id => id !== actorId);
       await this.repository.setStatus(pactId, 'cancelled', now, context);
-      return { changed: true, expired: false };
+      return { changed: true, expired: false, recipients };
     });
     if (result.expired) throw new BusinessError('STATE_CONFLICT');
-    if (result.changed) await this.analytics.record(actorId, 'pact_cancelled', pactId);
+    if (result.changed) {
+      this.publish(result.recipients ?? [], pactId, 'cancelled');
+      await this.analytics.record(actorId, 'pact_cancelled', pactId);
+    }
     return this.get(pactId, actorId);
   }
   async list(actorId: string, query: PactListQuery, campId?: string) {

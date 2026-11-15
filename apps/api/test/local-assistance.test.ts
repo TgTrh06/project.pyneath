@@ -7,7 +7,7 @@ import { createServer } from 'node:http';
 import { Test } from '@nestjs/testing';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { assistanceOutputSchema, assistanceRequestSchema, assistanceSystemPrompt } from '@pyneath/contracts';
+import { assistanceOutputSchema, assistanceRequestSchema, assistanceSystemPrompt, assistanceDomainGuidance } from '@pyneath/contracts';
 import { readApiConfig } from '../src/platform/config/api-config';
 import { LocalAssistanceProvider } from '../src/modules/assistance/infrastructure/local-assistance.provider';
 import { AssistanceService } from '../src/modules/assistance/application/assistance.service';
@@ -50,6 +50,7 @@ test('fake inference HTTP server: bounded response, strict policy, no external c
     let body = ''; for await (const chunk of req) body += chunk;
     const payload = JSON.parse(body);
     assert.equal(payload.messages[0].content, assistanceSystemPrompt);
+    assert.ok(payload.messages[0].content.includes(assistanceDomainGuidance));
     assert.deepEqual(JSON.parse(payload.messages[1].content), input);
     assert.equal(payload.max_tokens, 512);
     res.writeHead(code, { 'Content-Type': 'application/json' });

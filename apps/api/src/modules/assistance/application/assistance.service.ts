@@ -14,7 +14,7 @@ export class AssistanceService {
     private readonly provider: AssistanceProvider,
     private readonly analytics: Analytics,
     private readonly context?: AssistanceContextAccess,
-    private readonly version?: { provider: string; model: string; promptRevision?: string; diagnostics?: boolean }
+    private readonly version?: { provider: string; model: string; promptRevision?: string; policyRevision?: string; diagnostics?: boolean }
   ) { }
 
   configuration(): AssistanceConfig { return { ...this.config, capabilities: [...this.config.capabilities] }; }
@@ -31,7 +31,8 @@ export class AssistanceService {
     const started = performance.now();
     const resultEvent = (outcome: string, usage?: ProviderUsage) => !this.version?.diagnostics ? Promise.resolve() : this.analytics.record(accountId, 'assistance_result', undefined, {
       capability: input.capability, outcome, provider: this.version?.provider ?? 'unknown', model: this.version?.model ?? 'unknown',
-      promptRevision: this.version?.promptRevision ?? assistancePromptRevision, policyRevision: 'assistance-policy-v1', elapsedMs: Math.round(performance.now() - started),
+      promptRevision: this.version?.promptRevision ?? assistancePromptRevision,
+      policyRevision: this.version?.policyRevision ?? 'assistance-policy-v1', elapsedMs: Math.round(performance.now() - started),
       ...(usage ?? {})
     });
     const text = requestText(input);

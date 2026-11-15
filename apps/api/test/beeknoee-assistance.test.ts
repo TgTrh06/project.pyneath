@@ -8,6 +8,7 @@ import { BeeknoeeHttpTransport } from '../src/modules/assistance/infrastructure/
 import { assistanceConfiguration } from '../src/modules/assistance/infrastructure/assistance-configuration';
 import { AssistanceService } from '../src/modules/assistance/application/assistance.service';
 import type { Analytics } from '../src/modules/analytics/public-api';
+import { isGenericAssistanceSuggestion } from '../src/modules/assistance/domain/assistance-policy';
 
 const config = () => readApiConfig({ API_ASSISTANCE_PROVIDER: 'beeknoee', BEEKNOEE_API_KEY: 'fixture-not-a-key', API_LOG_LEVEL: 'silent' });
 const input: AssistanceRequest = { capability: 'stuck_recovery', currentStep: 'Viết đoạn mô tả dự án', stuckMode: 'too_large' };
@@ -24,6 +25,7 @@ test('configured JSON modes are fixed per request, validated locally, and never 
       assert.equal(body.response_format?.type, format === 'prompt' ? undefined : format);
       assert.match(body.messages[0].content, /JSON object/);
       assert.match(body.messages[0].content, /additionalProperties/);
+      assert.match(body.messages[0].content, /Công nghệ thông tin và kỹ thuật phần mềm/);
       return Response.json(completion(step));
     });
     const candidate = new BeeknoeeAssistanceProvider(cfg, new BeeknoeeHttpTransport());
@@ -41,6 +43,8 @@ test('Beeknoee needs its own key, allows only the two approved models, and expos
   assert.equal(readApiConfig({ BEEKNOEE_MODEL: 'bee/gpt-6-luna' }).BEEKNOEE_MODEL, 'bee/gpt-6-luna');
   assert.throws(() => readApiConfig({ BEEKNOEE_RESPONSE_FORMAT: 'auto' }));
   assert.equal(config().BEEKNOEE_MODEL, 'bee/gpt-6-luna');
+  assert.equal(config().API_ASSISTANCE_QUALITY_V2, 'false');
+  assert.throws(() => readApiConfig({ API_ASSISTANCE_QUALITY_V2: 'true' }), /API_ASSISTANCE_QUALITY_V2/);
   assert.deepEqual(assistanceConfiguration(config()), { enabled: true, processing: 'external', capabilities: ['assisted_start', 'open_seed_draft', 'stuck_recovery'] });
 });
 
@@ -66,6 +70,29 @@ test('each capability uses a single bounded JSON request, without OpenRouter-spe
     });
     assert.equal((await provider().generate(request)).kind, 'validated'); assert.equal(calls, 1); t.mock.restoreAll();
   }
+});
+
+test('Luna quality guard falls back on self-delegating steps without retrying or blocking grounded steps', async t => {
+  assert.equal(isGenericAssistanceSuggestion('Viết ra một việc nhỏ nhất có thể làm ngay.'), true);
+  assert.equal(isGenericAssistanceSuggestion('Chọn một bước tiếp theo.'), true);
+  assert.equal(isGenericAssistanceSuggestion('Viết một câu mô tả người dùng chính của ứng dụng.'), false);
+  let calls = 0;
+  t.mock.method(BeeknoeeHttpTransport.prototype, 'request', async (options: RequestInit) => {
+    calls++;
+    const body = JSON.parse(String(options.body));
+    if (calls <= 2) {
+      assert.match(body.messages[0].content, /không tự tạo ghi chú/i);
+      assert.match(body.messages[0].content, /giống lời gợi ý của một người hướng dẫn học CNTT kiên nhẫn/i);
+    } else assert.doesNotMatch(body.messages[0].content, /không tự tạo ghi chú/i);
+    return Response.json(completion({ ...step, recoveryStep: calls !== 2
+      ? 'Viết ra một việc nhỏ nhất có thể làm ngay.' : 'Viết một câu mô tả mục tiêu của báo cáo.' }));
+  });
+  const candidate = new BeeknoeeAssistanceProvider(readApiConfig({ API_ASSISTANCE_PROVIDER: 'beeknoee', BEEKNOEE_API_KEY: 'fixture',
+    API_ASSISTANCE_QUALITY_V2: 'true', API_LOG_LEVEL: 'silent' }), new BeeknoeeHttpTransport());
+  assert.equal((await candidate.generate(input)).kind, 'fallback');
+  assert.equal((await candidate.generate(input)).kind, 'validated');
+  assert.equal((await provider().generate(input)).kind, 'validated', 'v1 demo behavior remains selected by default');
+  assert.equal(calls, 3, 'one provider call per user request');
 });
 
 test('only selected context is read once, included as untrusted data, without extra model calls', async t => {

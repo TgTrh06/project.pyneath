@@ -2,7 +2,7 @@ import { assistanceConfiguration } from '../src/modules/assistance/infrastructur
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assistanceRequestSchema, assistanceResponseSchema } from '@pyneath/contracts';
+import { assistanceDomainGuidance, assistanceRequestSchema, assistanceResponseSchema } from '@pyneath/contracts';
 import { safeProductMetadata } from '../src/modules/analytics/domain/event-policy';
 import type { Analytics } from '../src/modules/analytics/public-api';
 import type { AssistanceProvider } from '../src/modules/assistance/application/assistance-provider';
@@ -127,8 +127,19 @@ test('OpenAI adapter sends only explicit text with store disabled and validates 
   assert.equal(generation?.store, false);
   assert.equal(generation?.model, 'gpt-6-luna');
   assert.equal(generation?.max_output_tokens, 256);
+  const instructions = JSON.stringify(generation?.input);
+  assert.match(instructions, /kỹ thuật phần mềm/i);
+  assert.match(instructions, /cơ sở dữ liệu\/SQL/i);
   assert.equal(JSON.stringify(generation).includes(privateText), true);
   assert.equal(requests.filter(request => request.path.endsWith('/moderations')).length, 2);
+});
+
+test('shared Assistance domain guidance stays focused on IT/software engineering', () => {
+  assert.match(assistanceDomainGuidance, /Công nghệ thông tin và kỹ thuật phần mềm/);
+  for (const topic of ['lập trình', 'cấu trúc dữ liệu', 'cơ sở dữ liệu/SQL', 'hệ điều hành', 'mạng máy tính', 'kiểm thử', 'Git', 'Linux']) {
+    assert.ok(assistanceDomainGuidance.includes(topic), `missing domain topic: ${topic}`);
+  }
+  assert.match(assistanceDomainGuidance, /Không cố gán một việc ngoài CNTT/);
 });
 
 test('OpenAI adapter refuses unsafe or malformed generated output', async t => {
