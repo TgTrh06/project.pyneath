@@ -30,6 +30,21 @@ Set server configuration through the hosting platform's secret/environment manag
 
 The web host must route `/api/v1` and the Socket.IO `/realtime` namespace/transport to the API. Configure TLS at the public edge and verify secure cookie behavior with the selected proxy before pilot use. Do not enable caching for authenticated API responses.
 
+## Custom Domain on Railway (Hobby) & Vercel
+
+When deploying Frontend on Vercel and Backend on Railway, use subdomains of the same custom domain (e.g. `yourdomain.com`) to ensure `SameSite=Lax` session cookies are treated as same-site by modern browsers:
+- **Web (Vercel)**: `https://app.yourdomain.com` (or `https://yourdomain.com`)
+  - CNAME record: `app` -> `cname.vercel-dns.com`
+  - Variables: `VITE_API_URL=https://api.yourdomain.com/api/v1`, `VITE_REALTIME_URL=https://api.yourdomain.com`
+- **API (Railway)**: `https://api.yourdomain.com`
+  - Railway Project Settings -> Networking -> Custom Domain: `api.yourdomain.com`
+  - CNAME record: `api` -> Railway edge target (provided in Railway dashboard)
+  - Variables: `API_HOST=0.0.0.0`, `API_PORT=8081`, `API_WEB_ORIGIN=https://app.yourdomain.com`
+- **Railway Hobby plan benefits**:
+  - Uninterrupted execution (containers do not spin down or sleep), keeping WebSocket presence alive.
+  - Dedicated managed PostgreSQL with automatic daily backups.
+  - Generous RAM and CPU bounds for the NestJS API container.
+
 ## Pre-pilot sequence
 
 1. **Approve the target.** Record web/API/database hosts, public origins, websocket routing, service owner, expected instance count, and who can access production secrets. Stop if these are undecided.
