@@ -1,5 +1,7 @@
 # Assistance quality v1 — implementation record, 2026-11-13
 
+**Follow-up:** the approved 48-call local evaluation is now recorded in [quality v1 results](assistance-quality-v1-results.md). The 0/60 count below describes the earlier implementation snapshot, before that run.
+
 ## Scope and observed results
 
 This is an implementation and mock-regression record for the internship Luna demo. It is **not** a 60-case model quality result. No Beeknoee/OpenRouter inference, database migration, production deployment or real-user pilot was run in this work.

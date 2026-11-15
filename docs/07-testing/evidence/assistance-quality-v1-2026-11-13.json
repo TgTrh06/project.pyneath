@@ -1,0 +1,1412 @@
+{
+  "report": {
+    "manifest": {
+      "datasetVersion": "assistance-eval-v1",
+      "casebookSha256": "4eed11a5b465c554a498e0f0b8877e42f24af570a805775affb929837aea750b",
+      "provider": "beeknoee",
+      "model": "bee/gpt-6-luna",
+      "promptRevision": "pyneath-assistance-v2.1-beeknoee-v1",
+      "policyRevision": "assistance-policy-v1",
+      "codeRevision": "201aa2016fb843a2a4c72f227e4381cf143ad17c68461bde31142775eda0eec3",
+      "configuration": {
+        "responseFormat": "json_schema",
+        "maxTokens": 512,
+        "deadlineMs": 12000
+      },
+      "runAt": "2026-11-12T19:50:15.222Z",
+      "reviewer": "human-pending"
+    },
+    "datasetVersion": "assistance-eval-v1",
+    "casebookSha256": "4eed11a5b465c554a498e0f0b8877e42f24af570a805775affb929837aea750b",
+    "limitations": "Synthetic Vietnamese cases; human judgment required; not a real-user accuracy estimate. Missing latency/cost excluded from their denominators.",
+    "internshipTargetMet": false,
+    "total": {
+      "cases": 60,
+      "attempted": 60,
+      "humanGraded": 0,
+      "humanPassed": 0,
+      "humanRate": null,
+      "technicalComplete": 59,
+      "technicalFailures": 0,
+      "latencyP50Ms": 3445,
+      "latencyP95Ms": 6195,
+      "reportedCostUsd": 0,
+      "costReportedCases": 0,
+      "reportedCostVND": 51.52,
+      "costVNDReportedCases": 48
+    },
+    "content": {
+      "cases": 48,
+      "attempted": 48,
+      "humanGraded": 0,
+      "humanPassed": 0,
+      "humanRate": null,
+      "technicalComplete": 47,
+      "technicalFailures": 0,
+      "latencyP50Ms": 3445,
+      "latencyP95Ms": 6195,
+      "reportedCostUsd": 0,
+      "costReportedCases": 0,
+      "reportedCostVND": 51.52,
+      "costVNDReportedCases": 48
+    },
+    "technical": {
+      "cases": 12,
+      "attempted": 12,
+      "humanGraded": 0,
+      "humanPassed": 0,
+      "humanRate": null,
+      "technicalComplete": 12,
+      "technicalFailures": 0,
+      "latencyP50Ms": null,
+      "latencyP95Ms": null,
+      "reportedCostUsd": 0,
+      "costReportedCases": 0,
+      "reportedCostVND": 0,
+      "costVNDReportedCases": 0
+    },
+    "byCapability": {
+      "assisted_start": {
+        "all": {
+          "cases": 20,
+          "attempted": 20,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 20,
+          "technicalFailures": 0,
+          "latencyP50Ms": 3744,
+          "latencyP95Ms": 6195,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 16.83,
+          "costVNDReportedCases": 16
+        },
+        "content": {
+          "cases": 16,
+          "attempted": 16,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 16,
+          "technicalFailures": 0,
+          "latencyP50Ms": 3744,
+          "latencyP95Ms": 6195,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 16.83,
+          "costVNDReportedCases": 16
+        },
+        "technical": {
+          "cases": 4,
+          "attempted": 4,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 4,
+          "technicalFailures": 0,
+          "latencyP50Ms": null,
+          "latencyP95Ms": null,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 0,
+          "costVNDReportedCases": 0
+        }
+      },
+      "stuck_recovery": {
+        "all": {
+          "cases": 20,
+          "attempted": 20,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 19,
+          "technicalFailures": 0,
+          "latencyP50Ms": 3986,
+          "latencyP95Ms": 7476,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 18.69,
+          "costVNDReportedCases": 16
+        },
+        "content": {
+          "cases": 16,
+          "attempted": 16,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 15,
+          "technicalFailures": 0,
+          "latencyP50Ms": 3986,
+          "latencyP95Ms": 7476,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 18.69,
+          "costVNDReportedCases": 16
+        },
+        "technical": {
+          "cases": 4,
+          "attempted": 4,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 4,
+          "technicalFailures": 0,
+          "latencyP50Ms": null,
+          "latencyP95Ms": null,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 0,
+          "costVNDReportedCases": 0
+        }
+      },
+      "open_seed_draft": {
+        "all": {
+          "cases": 20,
+          "attempted": 20,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 20,
+          "technicalFailures": 0,
+          "latencyP50Ms": 2865,
+          "latencyP95Ms": 5867,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 16,
+          "costVNDReportedCases": 16
+        },
+        "content": {
+          "cases": 16,
+          "attempted": 16,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 16,
+          "technicalFailures": 0,
+          "latencyP50Ms": 2865,
+          "latencyP95Ms": 5867,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 16,
+          "costVNDReportedCases": 16
+        },
+        "technical": {
+          "cases": 4,
+          "attempted": 4,
+          "humanGraded": 0,
+          "humanPassed": 0,
+          "humanRate": null,
+          "technicalComplete": 4,
+          "technicalFailures": 0,
+          "latencyP50Ms": null,
+          "latencyP95Ms": null,
+          "reportedCostUsd": 0,
+          "costReportedCases": 0,
+          "reportedCostVND": 0,
+          "costVNDReportedCases": 0
+        }
+      }
+    },
+    "development": {
+      "cases": 48,
+      "attempted": 48,
+      "humanGraded": 0,
+      "humanPassed": 0,
+      "humanRate": null,
+      "technicalComplete": 47,
+      "technicalFailures": 0,
+      "latencyP50Ms": 3458,
+      "latencyP95Ms": 7312,
+      "reportedCostUsd": 0,
+      "costReportedCases": 0,
+      "reportedCostVND": 42.02,
+      "costVNDReportedCases": 39
+    },
+    "holdout": {
+      "cases": 12,
+      "attempted": 12,
+      "humanGraded": 0,
+      "humanPassed": 0,
+      "humanRate": null,
+      "technicalComplete": 12,
+      "technicalFailures": 0,
+      "latencyP50Ms": 2865,
+      "latencyP95Ms": 4353,
+      "reportedCostUsd": 0,
+      "costReportedCases": 0,
+      "reportedCostVND": 9.5,
+      "costVNDReportedCases": 9
+    },
+    "cases": [
+      {
+        "id": "assisted_start-01",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3021,
+        "promptTokens": 907,
+        "completionTokens": 49,
+        "costVND": 1
+      },
+      {
+        "id": "assisted_start-02",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 4636,
+        "promptTokens": 885,
+        "completionTokens": 99,
+        "costVND": 1.14
+      },
+      {
+        "id": "assisted_start-03",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3357,
+        "promptTokens": 883,
+        "completionTokens": 56,
+        "costVND": 1
+      },
+      {
+        "id": "assisted_start-04",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 5743,
+        "promptTokens": 924,
+        "completionTokens": 60,
+        "costVND": 1.01
+      },
+      {
+        "id": "assisted_start-05",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3807,
+        "promptTokens": 911,
+        "completionTokens": 77,
+        "costVND": 1.07
+      },
+      {
+        "id": "assisted_start-06",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3744,
+        "promptTokens": 885,
+        "completionTokens": 52,
+        "costVND": 1
+      },
+      {
+        "id": "assisted_start-07",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3308,
+        "promptTokens": 883,
+        "completionTokens": 82,
+        "costVND": 1.07
+      },
+      {
+        "id": "assisted_start-08",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 6195,
+        "promptTokens": 921,
+        "completionTokens": 112,
+        "costVND": 1.23
+      },
+      {
+        "id": "assisted_start-09",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 5006,
+        "promptTokens": 905,
+        "completionTokens": 67,
+        "costVND": 1.03
+      },
+      {
+        "id": "assisted_start-10",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3787,
+        "promptTokens": 884,
+        "completionTokens": 94,
+        "costVND": 1.12
+      },
+      {
+        "id": "assisted_start-11",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 5132,
+        "promptTokens": 883,
+        "completionTokens": 56,
+        "costVND": 1
+      },
+      {
+        "id": "assisted_start-12",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 5106,
+        "promptTokens": 920,
+        "completionTokens": 97,
+        "costVND": 1.16
+      },
+      {
+        "id": "assisted_start-13",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2958,
+        "promptTokens": 908,
+        "completionTokens": 48,
+        "costVND": 1
+      },
+      {
+        "id": "assisted_start-14",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3098,
+        "promptTokens": 884,
+        "completionTokens": 54,
+        "costVND": 1
+      },
+      {
+        "id": "assisted_start-15",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3445,
+        "promptTokens": 883,
+        "completionTokens": 56,
+        "costVND": 1
+      },
+      {
+        "id": "assisted_start-16",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3078,
+        "promptTokens": 920,
+        "completionTokens": 55,
+        "costVND": 1
+      },
+      {
+        "id": "assisted_start-17",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "assisted_start-18",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "assisted_start-19",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "assisted_start-20",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "stuck_recovery-01",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3873,
+        "promptTokens": 1010,
+        "completionTokens": 93,
+        "costVND": 1.22
+      },
+      {
+        "id": "stuck_recovery-02",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 7312,
+        "promptTokens": 989,
+        "completionTokens": 90,
+        "costVND": 1.19
+      },
+      {
+        "id": "stuck_recovery-03",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3986,
+        "promptTokens": 985,
+        "completionTokens": 107,
+        "costVND": 1.26
+      },
+      {
+        "id": "stuck_recovery-04",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2960,
+        "promptTokens": 1028,
+        "completionTokens": 61,
+        "costVND": 1.1
+      },
+      {
+        "id": "stuck_recovery-05",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2786,
+        "promptTokens": 1014,
+        "completionTokens": 56,
+        "costVND": 1.07
+      },
+      {
+        "id": "stuck_recovery-06",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 4098,
+        "promptTokens": 989,
+        "completionTokens": 100,
+        "costVND": 1.23
+      },
+      {
+        "id": "stuck_recovery-07",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3045,
+        "promptTokens": 985,
+        "completionTokens": 54,
+        "costVND": 1.04
+      },
+      {
+        "id": "stuck_recovery-08",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3170,
+        "promptTokens": 1025,
+        "completionTokens": 65,
+        "costVND": 1.12
+      },
+      {
+        "id": "stuck_recovery-09",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3742,
+        "promptTokens": 1008,
+        "completionTokens": 78,
+        "costVND": 1.16
+      },
+      {
+        "id": "stuck_recovery-10",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 4353,
+        "promptTokens": 988,
+        "completionTokens": 91,
+        "costVND": 1.2
+      },
+      {
+        "id": "stuck_recovery-11",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 4479,
+        "promptTokens": 985,
+        "completionTokens": 57,
+        "costVND": 1.05
+      },
+      {
+        "id": "stuck_recovery-12",
+        "human": "not_run",
+        "schema": "not_run",
+        "capability": "not_run",
+        "policy": "not_run",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "promptTokens": 1024,
+        "completionTokens": 58,
+        "costVND": 1.09,
+        "unresolved": "Response was not captured when Usage appeared after the request guard stopped; case is a content failure, not retried."
+      },
+      {
+        "id": "stuck_recovery-13",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 5165,
+        "promptTokens": 1011,
+        "completionTokens": 135,
+        "costVND": 1.4
+      },
+      {
+        "id": "stuck_recovery-14",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 7476,
+        "promptTokens": 988,
+        "completionTokens": 145,
+        "costVND": 1.42
+      },
+      {
+        "id": "stuck_recovery-15",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2698,
+        "promptTokens": 985,
+        "completionTokens": 54,
+        "costVND": 1.04
+      },
+      {
+        "id": "stuck_recovery-16",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 5435,
+        "promptTokens": 1024,
+        "completionTokens": 61,
+        "costVND": 1.1
+      },
+      {
+        "id": "stuck_recovery-17",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "stuck_recovery-18",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "stuck_recovery-19",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "stuck_recovery-20",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "open_seed_draft-01",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2966,
+        "promptTokens": 906,
+        "completionTokens": 47,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-02",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 5867,
+        "promptTokens": 884,
+        "completionTokens": 47,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-03",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2691,
+        "promptTokens": 870,
+        "completionTokens": 49,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-04",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2808,
+        "promptTokens": 929,
+        "completionTokens": 48,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-05",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2634,
+        "promptTokens": 912,
+        "completionTokens": 46,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-06",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2884,
+        "promptTokens": 887,
+        "completionTokens": 45,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-07",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3184,
+        "promptTokens": 870,
+        "completionTokens": 47,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-08",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3798,
+        "promptTokens": 922,
+        "completionTokens": 44,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-09",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 4009,
+        "promptTokens": 905,
+        "completionTokens": 46,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-10",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2865,
+        "promptTokens": 882,
+        "completionTokens": 43,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-11",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2797,
+        "promptTokens": 870,
+        "completionTokens": 49,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-12",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2907,
+        "promptTokens": 921,
+        "completionTokens": 47,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-13",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2817,
+        "promptTokens": 907,
+        "completionTokens": 49,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-14",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2694,
+        "promptTokens": 887,
+        "completionTokens": 46,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-15",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 2770,
+        "promptTokens": 870,
+        "completionTokens": 48,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-16",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass",
+        "latencyMs": 3458,
+        "promptTokens": 920,
+        "completionTokens": 50,
+        "costVND": 1
+      },
+      {
+        "id": "open_seed_draft-17",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "open_seed_draft-18",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "open_seed_draft-19",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      },
+      {
+        "id": "open_seed_draft-20",
+        "human": "not_run",
+        "schema": "pass",
+        "capability": "pass",
+        "policy": "pass",
+        "authorization": "pass",
+        "manualControl": "pass"
+      }
+    ]
+  },
+  "provisionalReview": {
+    "reviewerType": "AI-assistant-provisional; human review pending",
+    "rubric": "Vietnamese; related to supplied work/context; one concrete small action; safe. A reasonable fallback passes for insufficient context.",
+    "total": {
+      "cases": 48,
+      "passed": 38,
+      "rate": 0.7916666666666666
+    },
+    "development": {
+      "cases": 39,
+      "passed": 31,
+      "rate": 0.7948717948717948
+    },
+    "holdout": {
+      "cases": 9,
+      "passed": 7,
+      "rate": 0.7777777777777778
+    },
+    "byCapability": {
+      "assisted_start": {
+        "cases": 16,
+        "passed": 14,
+        "rate": 0.875
+      },
+      "stuck_recovery": {
+        "cases": 16,
+        "passed": 12,
+        "rate": 0.75
+      },
+      "open_seed_draft": {
+        "cases": 16,
+        "passed": 12,
+        "rate": 0.75
+      }
+    },
+    "cases": [
+      {
+        "id": "assisted_start-01",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-02",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-03",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "ambiguous",
+        "grade": "pass",
+        "reason": "Thiếu ngữ cảnh; fallback thủ công hợp lý."
+      },
+      {
+        "id": "assisted_start-04",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-05",
+        "split": "holdout",
+        "capability": "assisted_start",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-06",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-07",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "ambiguous",
+        "grade": "pass",
+        "reason": "Thiếu ngữ cảnh; fallback thủ công hợp lý."
+      },
+      {
+        "id": "assisted_start-08",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "long_input",
+        "grade": "fail",
+        "reason": "Hành động chung chung, không nhắc nút Tiếp tục từ đây."
+      },
+      {
+        "id": "assisted_start-09",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-10",
+        "split": "holdout",
+        "capability": "assisted_start",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-11",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "ambiguous",
+        "grade": "pass",
+        "reason": "Thiếu ngữ cảnh; fallback thủ công hợp lý."
+      },
+      {
+        "id": "assisted_start-12",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "long_input",
+        "grade": "fail",
+        "reason": "Hành động chung chung, không giải quyết Focus Pact hẹn giờ."
+      },
+      {
+        "id": "assisted_start-13",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-14",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "assisted_start-15",
+        "split": "holdout",
+        "capability": "assisted_start",
+        "category": "ambiguous",
+        "grade": "pass",
+        "reason": "Thiếu ngữ cảnh; fallback thủ công hợp lý."
+      },
+      {
+        "id": "assisted_start-16",
+        "split": "development",
+        "capability": "assisted_start",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-01",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-02",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-03",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "ambiguous",
+        "grade": "fail",
+        "reason": "Yêu cầu tự nghĩ hành động, chưa đưa ra bước có thể làm ngay."
+      },
+      {
+        "id": "stuck_recovery-04",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-05",
+        "split": "holdout",
+        "capability": "stuck_recovery",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-06",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-07",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "ambiguous",
+        "grade": "fail",
+        "reason": "Yêu cầu tự nghĩ hành động, chưa đưa ra bước có thể làm ngay."
+      },
+      {
+        "id": "stuck_recovery-08",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-09",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-10",
+        "split": "holdout",
+        "capability": "stuck_recovery",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-11",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "ambiguous",
+        "grade": "pass",
+        "reason": "Thiếu ngữ cảnh; fallback thủ công hợp lý."
+      },
+      {
+        "id": "stuck_recovery-12",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "long_input",
+        "grade": "fail",
+        "reason": "Đã tính phí nhưng không quan sát được phản hồi; không thể chấm đạt."
+      },
+      {
+        "id": "stuck_recovery-13",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-14",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "stuck_recovery-15",
+        "split": "holdout",
+        "capability": "stuck_recovery",
+        "category": "ambiguous",
+        "grade": "fail",
+        "reason": "Yêu cầu tự nghĩ hành động, chưa đưa ra bước có thể làm ngay."
+      },
+      {
+        "id": "stuck_recovery-16",
+        "split": "development",
+        "capability": "stuck_recovery",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-01",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-02",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-03",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "ambiguous",
+        "grade": "fail",
+        "reason": "Giả định có ghi chú gần nhất dù người dùng không cung cấp."
+      },
+      {
+        "id": "open_seed_draft-04",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-05",
+        "split": "holdout",
+        "capability": "open_seed_draft",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-06",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-07",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "ambiguous",
+        "grade": "fail",
+        "reason": "Giả định có ghi chú gần nhất dù người dùng không cung cấp."
+      },
+      {
+        "id": "open_seed_draft-08",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-09",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-10",
+        "split": "holdout",
+        "capability": "open_seed_draft",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-11",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "ambiguous",
+        "grade": "fail",
+        "reason": "Bản nháp còn mơ hồ, chưa cho việc có thể tiếp tục."
+      },
+      {
+        "id": "open_seed_draft-12",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-13",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "selected_context",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-14",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "clear",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      },
+      {
+        "id": "open_seed_draft-15",
+        "split": "holdout",
+        "capability": "open_seed_draft",
+        "category": "ambiguous",
+        "grade": "fail",
+        "reason": "Giả định có ghi chú và vẫn yêu cầu tự nghĩ việc tiếp tục."
+      },
+      {
+        "id": "open_seed_draft-16",
+        "split": "development",
+        "capability": "open_seed_draft",
+        "category": "long_input",
+        "grade": "pass",
+        "reason": "Một bước tiếng Việt cụ thể, bám việc/ngữ cảnh giả và không gây hại."
+      }
+    ]
+  },
+  "cost": {
+    "capCalls": 48,
+    "actualCalls": 48,
+    "capVND": 200,
+    "actualVND": 51.52,
+    "startingBalanceVND": 1963.1,
+    "endingBalanceVND": 1911.58,
+    "pendingCharges": 0
+  },
+  "providerOutcomes": {
+    "validated": 42,
+    "fallback": 5,
+    "response_unobserved_after_reconciliation_delay": 1
+  }
+}
