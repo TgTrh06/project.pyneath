@@ -2,6 +2,9 @@
 
 ## Current
 
+- [ADR-0030 — Module ownership refactor](0030-module-ownership-refactor.md) — Accepted for implementation; migration in progress.
+- [ADR-0029 — Local Assistance QLoRA](0029-local-assistance-qlora.md) — Accepted for implementation; FastAPI retention superseded by ADR-0030.
+
 - [ADR-0028 — Camp forest projection](0028-camp-forest-projection.md) — Accepted for P3A implementation; rollout separately authorized.
 
 - [ADR-0027 — Personal forest arrangement](0027-personal-forest-arrangement.md) — Accepted; dev rollout separately authorized and completed.
@@ -30,3 +33,9 @@
 - [ADR-0007](0007-node-typescript-primary-stack.md) and [ADR-0009](0009-redis-rabbitmq-microservices.md) — historical/superseded.
 
 ADR numbers are permanent history and are never renumbered.
+
+- [ADR-0032 — Beeknoee local Assistance trial](0032-beeknoee-local-trial.md) — Accepted; bounded trial completed and Luna selected locally.
+
+- [ADR-0031 — OpenRouter Assistance in the internship MVP](0031-openrouter-internship-mvp.md) — Accepted for local implementation and bounded real-provider verification.
+
+- [ADR-0033 — Required Assistance context](0033-required-assistance-context.md) — Accepted for local implementation; automatic account-owned context on every suggestion.

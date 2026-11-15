@@ -1,6 +1,6 @@
 import { index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { accounts } from '../../identity/public-api';
-import { camps } from '../../camp/public-api';
+import { accounts } from '../../identity/infrastructure/identity.schema';
+import { camps } from '../../camp/infrastructure/camp.schema';
 
 export const focusKind = pgEnum('focus_session_kind', ['solo', 'pact']);
 export const focusStatus = pgEnum('focus_session_status', ['active', 'completed', 'cancelled']);
@@ -16,3 +16,10 @@ export const sessionParticipants = pgTable('session_participants', {
   activeSlotAccountId: uuid('active_slot_account_id').references(() => accounts.id, { onDelete: 'cascade' }), intention: text('intention'), presence: participantPresence('presence').notNull().default('active'), outcome: checkoutOutcome('outcome'),
   joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(), checkedOutAt: timestamp('checked_out_at', { withTimezone: true }),
 }, table => [uniqueIndex('session_participants_session_account_uq').on(table.sessionId, table.accountId), uniqueIndex('session_participants_one_active_per_account_uq').on(table.activeSlotAccountId), index('session_participants_account_idx').on(table.accountId)]);
+export const studySteps = pgTable('study_steps', {
+  sessionId: uuid('session_id').notNull().references(() => focusSessions.id, { onDelete: 'cascade' }),
+  accountId: uuid('account_id').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  stepText: text('step_text').notNull(), stepStatus: text('step_status').notNull(), note: text('note'),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+}, table => [uniqueIndex('study_steps_session_account_uq').on(table.sessionId, table.accountId),
+  index('study_steps_account_recorded_idx').on(table.accountId, table.recordedAt)]);

@@ -1,6 +1,10 @@
-import "../camps/camps.css";
+import "../../shared/styles/camps.css";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiRequestError, cancelPact, getPact, getProfile, getSession, joinSession, newRequestKey, respondPact, startPact } from "../../shared/api/api";
+import { ApiRequestError } from '../../shared/api/transport';
+import { cancelPact, getPact, respondPact, startPact } from '../../shared/api/clients/pacts';
+import { getProfile } from '../../shared/api/clients/profile';
+import { getSession, joinSession } from '../../shared/api/clients/focus';
+import { newRequestKey } from '../../shared/api/requestKey';
 import { useResource } from "../../shared/api/useResource";
 import { requestKeyStore } from "../../shared/api/requestKey";
 import { Dialog, ErrorMessage } from "../../shared/components/ui";
@@ -26,7 +30,13 @@ export function PactView({ id, accountId, onSession, onPacts }: { id: string; ac
   const pending = useRef(false); const [copyError,setCopyError] = useState("");
   const keys = useRef(requestKeyStore(newRequestKey));
   const expiredRefresh = useRef<string|null>(null);
-  useEffect(() => { const timer = setInterval(() => setNow(Date.now()),15000); const visible = () => { if (document.visibilityState === "visible") void resource.reload(); }; window.addEventListener("focus",visible); return () => { clearInterval(timer); window.removeEventListener("focus",visible); }; },[resource.reload]);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()),15000);
+    const refresh = () => { if (document.visibilityState === 'visible') void resource.reload(); };
+    const poll = window.setInterval(() => { if (document.visibilityState === 'visible') void resource.reload(); },5000);
+    window.addEventListener('focus',refresh);window.addEventListener('pyneath:pact-changed',refresh);document.addEventListener('visibilitychange',refresh);
+    return () => { clearInterval(timer);clearInterval(poll);window.removeEventListener('focus',refresh);window.removeEventListener('pyneath:pact-changed',refresh);document.removeEventListener('visibilitychange',refresh); };
+  },[resource.reload]);
   useEffect(() => {
     if (pact?.status !== "scheduled" || now <= Date.parse(pact.startsAt) + 1800000 || expiredRefresh.current === id) return;
     expiredRefresh.current = id;
@@ -51,17 +61,17 @@ export function PactView({ id, accountId, onSession, onPacts }: { id: string; ac
           : pact.status === "scheduled" && mine?.response === "declined"
             ? "Bạn đã chọn không tham gia. Có thể đổi lựa chọn khi Pact còn chờ bắt đầu."
             : "";
-  return <section className="camps-page pact-detail"><p className="eyebrow">FOCUS PACT · {status[pact.status]}</p><h1>{pact.durationMinutes} phút có mặt cùng nhau.</h1><p>{formatTime(pact.startsAt,resource.data!.timezone)} · {resource.data!.timezone}</p><FirstTimeHint compact topic="pact" title="Pact bắt đầu ra sao?">Người được mời cần nhận lời. Tạo lịch chưa mở phiên; người tạo bấm Bắt đầu vào đúng cửa sổ thời gian, sau đó người đã nhận lời mới tham gia.</FirstTimeHint><ErrorMessage message={resource.error} retry={resource.reload}/><ErrorMessage message={confirm ? "" : error}/>{message && <p role="status">{message}</p>}<details className="forest-row-details"><summary>Người tham gia · {pact.participants.length}</summary><ul className="row-list">{pact.participants.map(person => <li key={person.accountId}>{person.displayName ?? "Wanderer"}{person.accountId === accountId ? " · Bạn" : ""}<p className="field-hint">{responses[person.response]}</p></li>)}</ul></details>
+  return <section className="camps-page pact-detail"><p className="eyebrow">FOCUS PACT · {status[pact.status]}</p><h1>{pact.durationMinutes} phút có mặt cùng nhau.</h1><div className="pact-detail-grid"><div className="pact-detail-main"><p>{formatTime(pact.startsAt,resource.data!.timezone)} · {resource.data!.timezone}</p><FirstTimeHint compact topic="pact" title="Pact bắt đầu ra sao?">Người được mời cần nhận lời. Khi chủ phòng bấm bắt đầu, người đã nhận lời và đang trực tuyến sẽ tự vào phiên chung. Nếu lỡ mất kết nối, mở Pact để vào lại.</FirstTimeHint><ErrorMessage message={resource.error} retry={resource.reload}/><ErrorMessage message={confirm ? "" : error}/>{message && <p role="status">{message}</p>}
     <div className="button-row">{allowed.respond && <><button className="primary" disabled={busy || pact.participants.find(p => p.accountId === accountId)?.response === "accepted"} onClick={() => void act(async () => { await respondPact(id,"accepted"); await resource.reload(); })}>Nhận lời</button><button className="secondary" disabled={busy || pact.participants.find(p => p.accountId === accountId)?.response === "declined"} onClick={() => void act(async () => { await respondPact(id,"declined"); await resource.reload(); })}>Không tham gia</button></>}
     {allowed.start && <button className="primary" disabled={busy} onClick={() => void act(async () => { const result = await startPact(id,keys.current.for({id})); onSession(result.session.id); })}>Bắt đầu Pact</button>}
     {allowed.join && <button className="primary" disabled={busy} onClick={() => void act(async () => { const result = await joinSession(pact.sessionId!); onSession(result.session.id); })}>Tham gia phiên</button>}
     {allowed.cancel && <button className="text-action" disabled={busy} onClick={() => setConfirm(true)}>Hủy cuộc hẹn</button>}</div>
     {invitationStatus && <p role="status">{invitationStatus}</p>}
-    <ErrorMessage message={copyError}/><div className="button-row"><button className="secondary" disabled={busy || resource.loading} onClick={() => void resource.reload()}>Cập nhật trạng thái</button><button className="text-action" disabled={busy} onClick={() => { setCopyError(""); setMessage(""); void navigator.clipboard.writeText(location.origin+location.pathname+"#pact/"+id).then(() => setMessage("Đã sao chép link. Chỉ người được chọn mới truy cập được.")).catch(() => setCopyError("Chưa sao chép được link. Hãy thử lại.")); }}>Sao chép link Pact</button></div>
+    </div><aside className="pact-detail-context"><details className="forest-row-details"><summary>Người tham gia · {pact.participants.length}</summary><ul className="row-list">{pact.participants.map(person => <li key={person.accountId}>{person.displayName ?? "Wanderer"}{person.accountId === accountId ? " · Bạn" : ""}<p className="field-hint">{responses[person.response]}</p></li>)}</ul></details><ErrorMessage message={copyError}/><div className="button-row"><button className="secondary" disabled={busy || resource.loading} onClick={() => void resource.reload()}>Cập nhật trạng thái</button><button className="text-action" disabled={busy} onClick={() => { setCopyError(""); setMessage(""); void navigator.clipboard.writeText(location.origin+location.pathname+"#pact/"+id).then(() => setMessage("Đã sao chép link. Chỉ người được chọn mới truy cập được.")).catch(() => setCopyError("Chưa sao chép được link. Hãy thử lại.")); }}>Sao chép link Pact</button></div>
     <details className="forest-row-details"><summary>Thời gian và cách tham gia</summary>
-    {pact.status === "scheduled" && <p className="field-hint">Người tạo có thể bắt đầu từ 10 phút trước đến 30 phút sau giờ hẹn. Tải lại để xem trạng thái mới.</p>}
+    {pact.status === "scheduled" && <p className="field-hint">Người tạo có thể bắt đầu từ 10 phút trước đến 30 phút sau giờ hẹn. Trạng thái sẽ tự cập nhật khi Pact bắt đầu.</p>}
     {pact.status === "active" && <p className="field-hint">Nếu có người đã nhận lời nhưng chưa vào, Pact vẫn mở đến hết giờ để họ tham gia. Khi mọi người đã vào và khép phiên, Pact có thể kết thúc sớm.</p>}
     </details>
-    {confirm && <Dialog title="Hủy cuộc hẹn này?" onClose={() => { if (!busy) setConfirm(false); }}><p>{formatTime(pact.startsAt,resource.data!.timezone)} · {pact.durationMinutes} phút</p><ErrorMessage message={error}/><button className="danger" disabled={busy} onClick={() => void act(async () => { await cancelPact(id); setConfirm(false); await resource.reload(); })}>Xác nhận hủy</button></Dialog>}
+    </aside></div>{confirm && <Dialog title="Hủy cuộc hẹn này?" onClose={() => { if (!busy) setConfirm(false); }}><p>{formatTime(pact.startsAt,resource.data!.timezone)} · {pact.durationMinutes} phút</p><ErrorMessage message={error}/><button className="danger" disabled={busy} onClick={() => void act(async () => { await cancelPact(id); setConfirm(false); await resource.reload(); })}>Xác nhận hủy</button></Dialog>}
   </section>;
 }

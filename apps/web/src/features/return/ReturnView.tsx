@@ -3,19 +3,21 @@ import type { ReactNode } from "react";
 import { StartHelp } from "./StartHelp";
 import "./return.css";
 import { useRef, useState } from "react";
-import { ApiRequestError, deleteSeed, getProfile, getReturnState, newRequestKey, putSeed, startSolo, updateProfile } from "../../shared/api/api";
+import { ApiRequestError } from '../../shared/api/transport';
+import { deleteSeed, putSeed } from '../../shared/api/clients/seed';
+import { getProfile, updateProfile } from '../../shared/api/clients/profile';
+import { getReturnState, startSolo } from '../../shared/api/clients/focus';
+import { newRequestKey } from '../../shared/api/requestKey';
 import { stableRequestKey } from "../../shared/api/requestKey";
 import { useResource } from "../../shared/api/useResource";
 import { Dialog, DurationPicker, ErrorMessage, type Duration } from "../../shared/components/ui";
 import { deviceTimezone, formatTime, validTimezone } from "../../shared/time";
 import { usePrivateDraft } from "../../shared/auth/usePrivateDraft";
-import { AssistanceCoach } from "../assistance/AssistanceCoach";
+import { AssistanceCoach } from "../assistance/public-api";
 import { PresetFocus } from './PresetFocus';
-import type { SoundId } from '../focus/Soundscape';
+import type { SoundId } from '../focus/controls-api';
 import { draftOwner, writePrivateDraft } from '../../shared/auth/privateDrafts';
 import { FirstTimeHint } from '../../shared/components/FirstTimeHint';
-
-import { PersonalForestSummary } from "../memory/PersonalForest";
 
 function ReturnNote({ children }: { children: ReactNode }) {
   return <div className="return-marten-note"><img src="/return/marten.webp" width="88" height="72" alt=""/><p>{children}</p></div>;
@@ -25,6 +27,15 @@ const loadReturn = async () => {
   const [state, profile] = await Promise.all([getReturnState(), getProfile()]);
   return { ...state, timezone: profile.profile?.timezone ?? deviceTimezone() };
 };
+function ReturnSchedule({ state, onPact }: { state: Awaited<ReturnType<typeof loadReturn>>; onPact: (id: string) => void }) {
+  const [expanded, setExpanded] = useState(() => state.upcomingPacts.length > 0);
+  return <aside className="return-schedule" aria-label="Cuộc hẹn sắp tới">
+    <details className="forest-row-details" open={expanded} onToggle={event => setExpanded(event.currentTarget.open)}>
+      <summary><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5h14v16H5zM8 2v6m8-6v6M5 11h14m-10 4h2m3 0h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg><span>Cuộc hẹn sắp tới</span><span className="return-schedule-count">{state.upcomingPacts.length}</span><span className="return-schedule-chevron" aria-hidden="true"/></summary>
+      {state.upcomingPacts.length > 0 ? <><p className="field-hint">Những cuộc hẹn đã nhận lời · {state.timezone}</p><ul className="return-appointments">{state.upcomingPacts.map(pact => <li key={pact.id}><button onClick={() => onPact(pact.id)}><span>{formatTime(pact.startsAt,state.timezone)}</span><span className="field-hint">{pact.durationMinutes} phút · Xem cuộc hẹn</span></button></li>)}</ul></> : <p className="muted">Chưa có cuộc hẹn nào đã nhận lời. Bạn có thể dành chặng này cho riêng mình.</p>}
+    </details>
+  </aside>;
+}
 export function ReturnView({ onSession, onPact }: { onSession: (id: string) => void; onPact: (id: string) => void; onNotice: (text: string) => void }) {
   const resource = useResource(loadReturn); const state = resource.data;
   const [intention, setIntention, clearIntention] = usePrivateDraft("return:intention", "", { persist:true });
@@ -59,10 +70,10 @@ export function ReturnView({ onSession, onPact }: { onSession: (id: string) => v
     try { await action(); } catch (e) { setError((e as Error).message); } finally { submitting.current = false; setBusy(false); }
   };
   if (!state) return <div className="return-page return-loading"><p className="eyebrow">QUAY LẠI</p><ErrorMessage message={resource.error} retry={resource.reload}/>{resource.loading && <p role="status">Đang tìm điểm bạn đã dừng…</p>}</div>;
-  return <div className="return-page"><ErrorMessage message={resource.error} retry={resource.reload}/><div className="return-grid"><div className="return-main">
+  return <div className="return-page"><ErrorMessage message={resource.error} retry={resource.reload}/>{!state.activeSession && state.profileReady && <section className="page-intro"><p className="eyebrow">QUAY LẠI</p><h1>{state.openSeed ? "Lần trước bạn dừng ở đây." : "Một việc nhỏ, ngay lúc này."}</h1><ReturnNote>{state.openSeed ? "Bạn có thể tiếp tục từ đây, hoặc chọn việc khác." : "Chọn một việc đủ nhỏ để bắt đầu."}</ReturnNote></section>}<div className="return-grid"><div className="return-main">
     {state.activeSession ? <section className="return-panel return-resume"><p className="eyebrow">PHIÊN ĐANG MỞ</p><h1>Bạn đang có một chặng chưa khép lại.</h1><ReturnNote>Một chặng đang đợi bạn tiếp tục.</ReturnNote><button className="primary" onClick={() => onSession(state.activeSession!.id)}>Quay lại phiên</button></section>
     : !state.profileReady ? <form className="return-panel return-composer" aria-busy={busy} onSubmit={e => { e.preventDefault(); void perform(async () => { await updateProfile({ timezone }); await resource.reload(); }); }}><p className="eyebrow">BƯỚC ĐẦU TIÊN</p><h1>Giờ địa phương của bạn.</h1><p>Kiểm tra múi giờ để Pyneath hiển thị đúng lịch hẹn.</p>{state.openSeed && <div className="return-seed"><p className="eyebrow">ĐIỂM TIẾP TỤC ĐÃ LƯU</p><blockquote>{state.openSeed.text}</blockquote><p className="field-hint">Điểm này đã được lưu riêng cho bạn.</p></div>}<label>Múi giờ IANA<input value={timezone} onChange={e => setTimezone(e.target.value)} placeholder="Asia/Ho_Chi_Minh" required /></label><ErrorMessage message={error}/><button className="primary" disabled={busy || !validTimezone(timezone)}>{busy ? "Đang lưu…" : "Xác nhận múi giờ"}</button></form>
-    : <><section className="page-intro"><p className="eyebrow">QUAY LẠI</p><h1>{state.openSeed ? "Lần trước bạn dừng ở đây." : "Một việc nhỏ, ngay lúc này."}</h1><ReturnNote>{state.openSeed ? "Bạn có thể tiếp tục từ đây, hoặc chọn việc khác." : "Chọn một việc đủ nhỏ để bắt đầu."}</ReturnNote></section>
+    : <>
       {state.openSeed && <section className="return-seed"><p className="eyebrow">ĐIỂM TIẾP TỤC · OPEN SEED</p><FirstTimeHint compact topic="seed" title="Open Seed là gì?">Một câu riêng để biết lần sau bắt đầu từ đâu. Bạn có thể tiếp tục, thay hoặc xóa; Camp không nhìn thấy.</FirstTimeHint>{!editingSeed && <blockquote>{state.openSeed.text}</blockquote>}{editingSeed ? <form className="return-seed-editor" aria-busy={busy} onSubmit={event => { event.preventDefault(); void perform(async () => {
         const saved = await putSeed(seedDraft.trim());
         resource.setData(current => current ? { ...current, openSeed:saved.openSeed } : current);
@@ -74,11 +85,9 @@ export function ReturnView({ onSession, onPact }: { onSession: (id: string) => v
         if (request !== startRequest) setStartRequest(request);
         try { const value = await startSolo(payload, request.key); writePrivateDraft(draftOwner(), `session:${value.session.id}:soundscape`, sound, true); clearStartRequest(); clearIntention(); clearDuration(); clearEditing(); onSession(value.session.id); }
         catch (failure) { if (failure instanceof ApiRequestError && failure.status === 409) await resource.reload(); throw failure; }
-      }); }}><fieldset className="return-fields" disabled={busy}><label>Việc nhỏ bạn muốn bắt đầu<textarea ref={input} placeholder="Ví dụ: mở tài liệu và viết một câu đầu tiên" value={intention} required maxLength={280} onChange={e => { clearStartRequest(); setIntention(e.target.value); }} aria-describedby="intention-count" /></label><p className="field-hint" id="intention-count">{intention.length}/280 ký tự · Chỉ riêng bạn nhìn thấy.</p><DurationPicker value={duration} onChange={value => { clearStartRequest(); setDuration(value); }}/><ErrorMessage message={confirm ? "" : error}/><button className="primary" disabled={busy || !intention.trim()}>{busy ? "Đang mở phiên…" : "Bắt đầu phiên"}</button><StartHelp value={intention} onChoose={value => { clearStartRequest(); setIntention(value); requestAnimationFrame(() => input.current?.focus()); }}/><AssistanceCoach capability="assisted_start" value={intention} disabled={busy} onChoose={value => { clearStartRequest(); setIntention(value); requestAnimationFrame(() => input.current?.focus()); }}/><details className="return-options"><summary>Âm thanh và lựa chọn thường dùng</summary><PresetFocus duration={duration} setDuration={setDuration} sound={sound} setSound={setSound}/></details></fieldset></form>}<FirstTimeHint compact topic="focus" title="Focus hoạt động thế nào?">Viết một ý định nhỏ, chọn thời lượng rồi bấm Bắt đầu. Đồng hồ theo máy chủ; đóng tab không khép phiên.</FirstTimeHint>
+      }); }}><fieldset className="return-fields" disabled={busy}><label>Việc nhỏ bạn muốn bắt đầu<textarea ref={input} placeholder="Ví dụ: đọc một phần đề cương ôn tập" value={intention} required maxLength={280} onChange={e => { clearStartRequest(); setIntention(e.target.value); }} aria-describedby="intention-count" /></label><p className="field-hint" id="intention-count">{intention.length}/280 ký tự · Chỉ riêng bạn nhìn thấy.</p><DurationPicker value={duration} onChange={value => { clearStartRequest(); setDuration(value); }}/><ErrorMessage message={confirm ? "" : error}/><button className="primary" disabled={busy || !intention.trim()}>{busy ? "Đang mở phiên…" : "Bắt đầu phiên"}</button><StartHelp value={intention} onChoose={value => { clearStartRequest(); setIntention(value); requestAnimationFrame(() => input.current?.focus()); }}/><details className="return-options"><summary>Âm thanh và lựa chọn thường dùng</summary><PresetFocus duration={duration} setDuration={setDuration} sound={sound} setSound={setSound}/></details></fieldset></form>}<FirstTimeHint compact topic="focus" title="Focus hoạt động thế nào?">Viết một ý định nhỏ, chọn thời lượng rồi bấm Bắt đầu. Đồng hồ theo máy chủ; đóng tab không khép phiên.</FirstTimeHint>
     </>}
-    <PersonalForestSummary/></div><aside className="return-schedule" aria-labelledby="return-schedule-title"><details className="forest-row-details"><summary><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5h14v16H5zM8 2v6m8-6v6M5 11h14m-10 4h2m3 0h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg><span id="return-schedule-title">Cuộc hẹn sắp tới</span><span className="return-schedule-count">{state.upcomingPacts.length}</span><span className="return-schedule-chevron" aria-hidden="true">⌄</span></summary>
-      {state.upcomingPacts.length > 0 ? <><p className="field-hint">Những cuộc hẹn đã nhận lời · {state.timezone}</p><ul className="return-appointments">{state.upcomingPacts.map(pact => <li key={pact.id}><button onClick={() => onPact(pact.id)}><span>{formatTime(pact.startsAt,state.timezone)}</span><span className="field-hint">{pact.durationMinutes} phút · Xem cuộc hẹn</span></button></li>)}</ul></> : <p className="muted">Chưa có cuộc hẹn nào đã nhận lời. Bạn có thể dành chặng này cho riêng mình.</p>}
-    </details></aside></div>
+    </div><div className="return-context"><ReturnSchedule state={state} onPact={onPact}/><AssistanceCoach capability="assisted_start" value={intention} disabled={busy} onChoose={value => { clearStartRequest(); setIntention(value); requestAnimationFrame(() => input.current?.focus()); }}/><aside className="return-dashboard-shortcut"><h2>Nhìn lại chặng học</h2><p>Các bước và phiên đã qua được sắp theo ngày trong Dashboard.</p><a href="#dashboard" className="secondary">Xem Dashboard <span aria-hidden="true">↗</span></a></aside></div></div>
     {confirm && <Dialog title="Bỏ điểm tiếp tục này?" onClose={() => { if (!busy) setConfirm(false); }}><p>Bạn có thể viết điểm mới sau phiên tiếp theo.</p><button className="danger" disabled={busy} onClick={() => void perform(async () => { await deleteSeed(); setConfirm(false); await resource.reload(); })}>Bỏ điểm tiếp tục</button><ErrorMessage message={error}/></Dialog>}
   </div>;
 }

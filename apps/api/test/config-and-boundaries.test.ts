@@ -3,9 +3,11 @@ import { test } from 'node:test';
 import { resolve } from 'node:path';
 import { readApiConfig, ConfigError } from '../src/platform/config/api-config';
 
-const { boundaryError, checkBoundaries } = require('../../scripts/check-boundaries.cjs') as {
+const { boundaryError, publicExportError, checkBoundaries, crossOwnerWriteErrors } = require('../../scripts/check-boundaries.cjs') as {
   boundaryError(source: string, target: string): string | undefined;
+  publicExportError(source: string, target: string, names: string[]): string | undefined;
   checkBoundaries(root: string): { files: number; errors: string[] };
+  crossOwnerWriteErrors(source: string, importedNames: string[]): string[];
 };
 
 test('API config is isolated from legacy environment, with bounded values and redacted errors', () => {
@@ -33,9 +35,32 @@ test('module checks reject cross-owner persistence, infrastructure in domain and
   assert.ok(boundaryError('modules/focus/application/start.ts', 'modules/pact/infrastructure/pact.schema.ts'));
   assert.ok(boundaryError('modules/pact/domain/pact.ts', 'drizzle-orm/pg-core'));
   assert.ok(boundaryError('modules/pact/application/create.ts', '@nestjs/common'));
+  assert.ok(boundaryError('modules/pact/domain/pact.ts', 'modules/pact/application/create.ts'));
+  assert.ok(boundaryError('shared/kernel/transaction.ts', 'drizzle-orm'));
+  assert.ok(boundaryError('shared/kernel/transaction.ts', 'platform/database/database.service.ts'));
   assert.ok(boundaryError('platform/http/controller.ts', 'modules/pact/public-api.ts'));
   assert.equal(boundaryError('modules/focus/application/start.ts', 'modules/pact/public-api.ts'), undefined);
   assert.equal(boundaryError('modules/focus/focus.module.ts', 'modules/pact/pact.module.ts'), undefined);
   assert.equal(boundaryError('modules/pact/infrastructure/repository.ts', 'drizzle-orm'), undefined);
   assert.deepEqual(checkBoundaries(resolve(__dirname, '../../src')).errors, []);
+});
+
+test('public module interfaces reject new concrete exports even under a renamed implementation file', () => {
+  assert.ok(publicExportError('modules/analytics/public-api.ts', './infrastructure/analytics.repository', ['DrizzleAnalyticsRepository']));
+  assert.ok(publicExportError('modules/analytics/public-api.ts', './application/analytics.service', ['AnalyticsService']));
+  assert.ok(publicExportError('modules/analytics/public-api.ts', './implementation', ['ConcreteAnalytics']));
+  assert.ok(publicExportError('modules/camp/public-api.ts', './infrastructure/camp.schema', ['camps']));
+  assert.equal(publicExportError('modules/analytics/public-api.ts', './application/analytics.ports', ['ANALYTICS', 'Analytics']), undefined);
+});
+
+test('schema inventory permits existing infrastructure reads without permitting foreign writes', () => {
+  assert.equal(boundaryError('modules/camp/infrastructure/camp.repository.ts', 'modules/profile/infrastructure/profile.schema.ts'), undefined);
+  assert.ok(boundaryError('modules/camp/application/camp.service.ts', 'modules/profile/infrastructure/profile.schema.ts'));
+  assert.ok(boundaryError('modules/camp/infrastructure/other.repository.ts', 'modules/profile/infrastructure/profile.schema.ts'));
+  assert.ok(boundaryError('modules/camp/infrastructure/camp.repository.ts', 'modules/profile/infrastructure/profile.repository.ts'));
+  assert.deepEqual(crossOwnerWriteErrors('db.select().from(foreignProfile); db.update(camps).set({});', ['foreignProfile']), []);
+  for (const operation of ['insert', 'update', 'delete']) {
+    assert.equal(crossOwnerWriteErrors(`db.${operation}(foreignProfile)`, ['foreignProfile']).length, 1);
+  }
+  assert.equal(crossOwnerWriteErrors('db.execute(sql`UPDATE ${foreignProfile} SET value = 1`)', ['foreignProfile']).length, 1);
 });

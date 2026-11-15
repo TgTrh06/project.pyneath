@@ -1,5 +1,14 @@
 # 07 — Testing
 
+- [Study progress candidate and migration gate](study-progress-readiness.md)
+
+- [Beeknoee local trial — Luna selected, 2026-11-13](beeknoee-trial-readiness.md)
+- [Assistance quality v1 implementation and eval readiness](assistance-quality-v1-readiness.md)
+- [Assistance quality v1 paid local evaluation, 2026-11-13](assistance-quality-v1-results.md)
+- [Assistance quality v2 candidate and human-review gate](assistance-quality-v2-readiness.md)
+
+- [Internship MVP with OpenRouter AI — local acceptance, 2026-11-11](internship-mvp-ai-readiness.md)
+
 - [P3E — browser zoom, narration and physical-device verification (in progress)](gamification-p3e-device-verification.md)
 
 - [P3D — gamification evidence and pilot preparation](gamification-p3d-readiness.md)

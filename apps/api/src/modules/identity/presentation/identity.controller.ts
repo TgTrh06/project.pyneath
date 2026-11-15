@@ -1,0 +1,37 @@
+import { BadRequestException, Controller, Get, Post, Req, Res, HttpCode } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { Public } from '../../../platform/security/public.decorator';
+import { IdentityHttpAdapter } from './identity-http.adapter';
+import { credentialsSchema } from '@pyneath/contracts';
+
+@Controller('api/v1')
+export class IdentityController {
+  constructor(private readonly identity: IdentityHttpAdapter) {}
+  @Public() @Get('auth/session')
+  async session(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    this.identity.limit(req);
+    const current = await this.identity.session(req);
+    if (current) this.identity.migrateCookie(req, res, current.session.expiresAt);
+    return current ? { authenticated: Boolean(current.account), account: current.account, csrfToken: current.session.csrfToken } : this.identity.issue(req, res, null);
+  }
+  @Public() @Post('auth/register')
+  async register(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    this.identity.limit(req);
+    await this.identity.csrf(req);
+    const input = credentialsSchema.safeParse(req.body);
+    if (!input.success) throw new BadRequestException();
+    const user = await this.identity.core.register(input.data.email, input.data.password);
+    return this.identity.issue(req, res, { id: user.id, email: user.email });
+  }
+  @Public() @Post('auth/login') @HttpCode(200)
+  async login(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    this.identity.limit(req);
+    await this.identity.csrf(req);
+    const input = credentialsSchema.safeParse(req.body);
+    if (!input.success) throw new BadRequestException();
+    const user = await this.identity.core.login(input.data.email, input.data.password);
+    return this.identity.issue(req, res, { id: user.id, email: user.email });
+  }
+  @Post('auth/logout') @HttpCode(204)
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) { await this.identity.logout(req, res); }
+}

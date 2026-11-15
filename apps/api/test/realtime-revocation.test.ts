@@ -1,3 +1,5 @@
+import { BusinessError } from '../src/shared/kernel/business-error';
+import { IDENTITY_ACCESS } from '../src/modules/identity/public-api';
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
@@ -7,11 +9,13 @@ import { Test } from '@nestjs/testing';
 import { realtimeEvents } from '@pyneath/contracts';
 import { API_CONFIG, readApiConfig } from '../src/platform/config/api-config';
 import { PineSocketAdapter } from '../src/platform/realtime/socket.adapter';
-import { IdentityService, sessionHash } from '../src/modules/identity/identity.service';
-import type { IdentityStore } from '../src/modules/identity/identity.store';
-import { FocusService } from '../src/modules/focus/focus.service';
-import { PreferencesService } from '../src/modules/preferences/preferences.service';
-import { PresenceGateway } from '../src/modules/presence/presence.gateway';
+import { createIdentity } from './helpers/module-fixtures';
+import { sessionHash } from '../src/modules/identity/infrastructure/identity-crypto';
+import type { IdentityRepository } from '../src/modules/identity/application/identity.ports';
+import { FOCUS_ACCESS } from '../src/modules/focus/public-api';
+import { PREFERENCES_ACCESS } from '../src/modules/preferences/public-api';
+import { PACT_ACCESS } from '../src/modules/pact/public-api';
+import { PresenceGateway } from '../src/modules/presence/presentation/presence.gateway';
 import type { Request, Response } from 'express';
 
 const account = { id: '9e52c17c-999d-4add-88b7-89c1b63a79ef', email: 'fixture@example.test' };
@@ -30,15 +34,15 @@ async function setup(t: TestContext, ttl = 60000) {
     revoke: async (hash: string) => { sessions.delete(hash); },
     rotateSession: async (hash: string) => { sessions.delete(hash); },
   };
-  const identity = new IdentityService(store as unknown as IdentityStore, config);
+  const identity = createIdentity(store as unknown as IdentityRepository, config);
   const focus = {
     changes: new Subject<string>(), presenceChanges: new Subject<{ sessionId: string; accountId: string; presence: 'break' }>(),
     snapshot: async () => ({ id: sessionId, status: 'active', intention: 'private fixture', participants: [{ accountId: account.id, presence: 'break' }] }),
     markConnected: async () => { writes++; }, setPresence: async () => { writes++; },
   };
   const module = await Test.createTestingModule({ providers: [PresenceGateway,
-    { provide: IdentityService, useValue: identity }, { provide: FocusService, useValue: focus },
-    { provide: PreferencesService, useValue: { presenceSharingChanges: new Subject<string>() } }, { provide: API_CONFIG, useValue: config },
+    { provide: IDENTITY_ACCESS, useValue: identity.core }, { provide: FOCUS_ACCESS, useValue: focus },
+    { provide: PREFERENCES_ACCESS, useValue: { presenceSharingChanges: new Subject<string>() } }, { provide: PACT_ACCESS, useValue: { changes: new Subject() } }, { provide: API_CONFIG, useValue: config },
   ] }).compile();
   const app = module.createNestApplication({ logger: false });
   app.useWebSocketAdapter(new PineSocketAdapter(app, config)); await app.listen(0, '127.0.0.1');
@@ -68,7 +72,7 @@ test('rotation and account deletion disconnect only the intended credentials', a
   const h = await setup(t); const a = await h.connect(), b = await h.connect(tokenB);
   const rotated = wait(a, 'disconnect'); await h.identity.issue(request(), response, account); await rotated;
   assert.equal(b.connected, true);
-  const deleted = wait(b, 'disconnect'); h.sessions.clear(); h.identity.deletedAccounts.next(account.id); await deleted;
+  const deleted = wait(b, 'disconnect'); h.sessions.clear(); h.identity.core.notifyAccountDeleted(account.id); await deleted;
 });
 test('expiry disconnects an idle socket without waiting for a heartbeat', async t => {
   const h = await setup(t, 600); const a = await h.connect();
@@ -106,5 +110,21 @@ for (const event of [realtimeEvents.subscribe, realtimeEvents.heartbeat, realtim
     const error = wait<{ code: string }>(a, realtimeEvents.error), ended = wait(a, 'disconnect');
     a.emit(event, { sessionId, ...(event === realtimeEvents.setPresence ? { presence: 'break' } : {}) });
     assert.equal((await error).code, 'SERVICE_UNAVAILABLE'); await ended; assert.equal(h.writes(), before);
+  });
+}
+
+for (const code of ['NOT_FOUND', 'FORBIDDEN', 'STATE_CONFLICT'] as const) {
+  test(`application ${code} preserves the socket error and removes the room subscription`, async t => {
+    const h = await setup(t), socket = await h.connect();
+    await h.subscribe(socket);
+    let attempts = 0;
+    h.focus.setPresence = async () => { attempts++; throw new BusinessError(code); };
+    const error = wait<{ code: string }>(socket, realtimeEvents.error);
+    socket.emit(realtimeEvents.setPresence, { sessionId, presence: 'break' });
+    assert.equal((await error).code, code === 'STATE_CONFLICT' ? 'CONFLICT' : code);
+    const unsubscribed = wait<{ code: string }>(socket, realtimeEvents.error);
+    socket.emit(realtimeEvents.setPresence, { sessionId, presence: 'break' });
+    assert.equal((await unsubscribed).code, 'FORBIDDEN');
+    assert.equal(attempts, 1, 'removed room no longer dispatches presence writes');
   });
 }

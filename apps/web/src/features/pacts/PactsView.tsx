@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PactListItem } from '@pyneath/contracts';
-import { listPacts, respondPact, getProfile } from '../../shared/api/api';
+import { listPacts, respondPact } from '../../shared/api/clients/pacts';
+import { getProfile } from '../../shared/api/clients/profile';
 import { useResource } from '../../shared/api/useResource';
 import { ErrorMessage } from '../../shared/components/ui';
 import { deviceTimezone, formatTime } from '../../shared/time';
-import '../camps/camps.css';
+import '../../shared/styles/camps.css';
+import { PactNotificationControl } from './PactNotificationControl';
 
 const groups = {pending:'Lời mời',upcoming:'Sắp tới',active:'Đang diễn ra',past:'Đã qua'} as const;
 const status = {scheduled:'Đã hẹn',active:'Đang diễn ra',completed:'Đã khép lại',cancelled:'Đã hủy',expired:'Đã hết hạn'};
@@ -12,7 +14,7 @@ export function PactsView({campId,onOpen,onSession}:{campId?:string;onOpen:(id:s
   const [group,setGroup]=useState<keyof typeof groups>('upcoming');
   return <section className="camps-page pact-list"><p className="eyebrow">FOCUS PACT</p>{campId ? <h2>Cuộc hẹn của bạn trong nhóm</h2> : <h1>Cuộc hẹn của tôi</h1>}
     <div className="button-row" role="group" aria-label="Nhóm cuộc hẹn">{Object.entries(groups).map(([key,label])=><button key={key} className="choice" aria-pressed={key===group} onClick={()=>setGroup(key as keyof typeof groups)}>{label}</button>)}</div>
-    <PactRows key={`${campId ?? 'all'}:${group}`} campId={campId} group={group} onOpen={onOpen} onSession={onSession}/>
+    <PactNotificationControl/><PactRows key={`${campId ?? 'all'}:${group}`} campId={campId} group={group} onOpen={onOpen} onSession={onSession}/>
   </section>;
 }
 function PactRows({campId,group,onOpen,onSession}:{campId?:string;group:keyof typeof groups;onOpen:(id:string)=>void;onSession?:(id:string)=>void}) {
@@ -22,10 +24,16 @@ function PactRows({campId,group,onOpen,onSession}:{campId?:string;group:keyof ty
   const profile=useResource(getProfile); const timezone=profile.data?.profile?.timezone ?? deviceTimezone();
   const load=useCallback(async(next?:string)=>{const seq=++generation.current;setLoading(true);setError('');try {const page=await listPacts(group,next,campId);if(mounted.current && seq===generation.current){setItems(old=>next ? [...old,...page.items.filter(item=>!old.some(row=>row.id===item.id))] : page.items);setCursor(page.nextCursor);}}catch(e){if(mounted.current && seq===generation.current)setError((e as Error).message);}finally{if(mounted.current && seq===generation.current)setLoading(false);}},[group,campId]);
   useEffect(()=>{mounted.current=true;void load();return()=>{mounted.current=false;generation.current++;};},[load]);
+  useEffect(()=>{
+    const refresh=()=>{if(document.visibilityState==='visible')void load();};
+    const timer=window.setInterval(refresh,15000);
+    window.addEventListener('pyneath:pact-changed',refresh);window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);
+    return()=>{clearInterval(timer);window.removeEventListener('pyneath:pact-changed',refresh);window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
+  },[load]);
   const act=async(action:()=>Promise<void>)=>{if(lock.current)return;lock.current=true;setBusy(true);setActionError('');try{await action();await load();}catch(e){setActionError((e as Error).message);await load();}finally{lock.current=false;setBusy(false);}};
   return <><ErrorMessage message={profile.error} retry={profile.reload}/><ErrorMessage message={error} retry={()=>void load(items.length ? cursor ?? undefined : undefined)}/><ErrorMessage message={actionError} retry={()=>{setActionError('');void load();}}/>{message && <p role="status">{message}</p>}
     {!loading && !error && !items.length && <p className="field-hint">Chưa có cuộc hẹn trong mục “{groups[group]}”.</p>}
-    <ul className="row-list">{items.map(item=><li key={item.id}><button className="text-action" onClick={()=>onOpen(item.id)}>{item.campName}</button><p>{formatTime(item.startsAt,timezone)} · {item.durationMinutes} phút</p><p className="field-hint">{status[item.status]} · {item.response==='invited'?'Chưa trả lời':item.response==='accepted'?'Đã nhận lời':'Không tham gia'}{item.isCreator?' · Bạn tạo cuộc hẹn':''}</p>
+    <ul className="row-list pact-cards">{items.map(item=><li key={item.id}><button className="text-action" onClick={()=>onOpen(item.id)}>{item.campName}</button><p className="pact-card-time">{formatTime(item.startsAt,timezone)} · {item.durationMinutes} phút</p><p className="field-hint pact-card-status">{status[item.status]} · {item.response==='invited'?'Chưa trả lời':item.response==='accepted'?'Đã nhận lời':'Không tham gia'}{item.isCreator?' · Bạn tạo cuộc hẹn':''}</p>
       {group==='pending' && <div className="button-row"><button className="primary" disabled={busy} onClick={()=>void act(async()=>{await respondPact(item.id,'accepted');setMessage('Đã nhận lời. Cuộc hẹn nằm trong mục Sắp tới.');})}>Nhận lời</button><button className="secondary" disabled={busy} onClick={()=>void act(async()=>{await respondPact(item.id,'declined');setMessage('Đã cập nhật: không tham gia.');})}>Không tham gia</button></div>}
       <details className="forest-row-details"><summary>Chi tiết</summary><p className="field-hint">Chỉ người được chọn mới có thể tham gia.</p><button className="secondary" onClick={()=>onOpen(item.id)}>Mở cuộc hẹn</button></details></li>)}</ul>
     {loading && <p role="status">Đang tải cuộc hẹn…</p>}<div className="button-row">{cursor && <button className="secondary" disabled={loading||busy} onClick={()=>void load(cursor)}>Tải thêm</button>}<button className="text-action" disabled={loading||busy} onClick={()=>void load()}>Cập nhật danh sách</button></div>

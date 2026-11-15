@@ -9,20 +9,21 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import type { DatabaseService } from '../src/platform/database/database.service';
 import { accounts } from '../src/modules/identity/infrastructure/identity.schema';
-import { IdentityService } from '../src/modules/identity/identity.service';
+import { createIdentity } from './helpers/module-fixtures';
 import { readApiConfig } from '../src/platform/config/api-config';
-import { IdentityStore } from '../src/modules/identity/identity.store';
+import { createIdentityStore } from './helpers/module-fixtures';
+import { IDENTITY_REPOSITORY } from '../src/modules/identity/application/identity.ports';
 import { profiles } from '../src/modules/profile/infrastructure/profile.schema';
-import { AnalyticsService } from '../src/modules/analytics/analytics.service';
-import { CampService } from '../src/modules/camp/camp.service';
-import { PactService } from '../src/modules/pact/pact.service';
+import { createAnalytics } from './helpers/module-fixtures';
+import { createCamps, createPacts, createFocus } from './helpers/module-fixtures';
 import { focusPacts, pactReminderReceipts } from '../src/modules/pact/infrastructure/pact.schema';
-import { FocusService } from '../src/modules/focus/focus.service';
-import { MemoryService } from '../src/modules/memory/memory.service';
-import { SeedService } from '../src/modules/seed/seed.service';
-import { PreferencesService } from '../src/modules/preferences/preferences.service';
+import { createMemory } from './helpers/module-fixtures';
+import { createSeeds } from './helpers/module-fixtures';
+import { createPreferences } from './helpers/module-fixtures';
 import { accountPreferences } from '../src/modules/preferences/infrastructure/preferences.schema';
-import { PrivacyService } from '../src/modules/privacy/privacy.service';
+import type { PactChange } from '../src/modules/pact/application/pact.ports';
+import { Subject } from 'rxjs';
+import { createPrivacy } from './helpers/module-fixtures';
 
 test('core PostgreSQL flow preserves ownership, reconnect state, seed uniqueness and shared milestone', { skip: !process.env.PYNEATH_TEST_DATABASE_URL }, async () => {
   const pool = new Pool({ connectionString: process.env.PYNEATH_TEST_DATABASE_URL, max: 4 }); const client = await pool.connect(); const concurrentClient = await pool.connect(); const schema = `core_test_${randomBytes(8).toString('hex')}`;
@@ -30,7 +31,7 @@ test('core PostgreSQL flow preserves ownership, reconnect state, seed uniqueness
     await client.query(`CREATE SCHEMA "${schema}"`); await client.query(`SET search_path TO "${schema}"`); await concurrentClient.query(`SET search_path TO "${schema}"`);
     const legacyAccountId = randomUUID(); const legacyCampId = randomUUID(); const legacyMembershipId = randomUUID(); const legacyEventId = randomUUID();
     const legacyInviteId = randomUUID(); const legacyPactId = randomUUID(); const legacySessionId = randomUUID(); const legacyParticipantId = randomUUID(); const legacyMilestoneId = randomUUID();
-    for (const file of ['0000_core_baseline.sql', '0001_white_spacker_dave.sql', '0002_camp-rename.sql', '0003_account-preferences-and-pact-reminders.sql', '0004_personal-forest-milestones.sql', '0005_personal-forest-arrangement.sql']) {
+    for (const file of ['0000_core_baseline.sql', '0001_white_spacker_dave.sql', '0002_camp-rename.sql', '0003_account-preferences-and-pact-reminders.sql', '0004_personal-forest-milestones.sql', '0005_personal-forest-arrangement.sql', '0006_study_steps.sql']) {
       const migration = readFileSync(resolve(__dirname, `../../drizzle/${file}`), 'utf8').replaceAll('"public"', `"${schema}"`);
       await client.query(migration);
       if (file === '0001_white_spacker_dave.sql') {
@@ -57,13 +58,21 @@ test('core PostgreSQL flow preserves ownership, reconnect state, seed uniqueness
     assert.deepEqual(preserved.rows, [{ invite_id: legacyInviteId, pact_id: legacyPactId, session_id: legacySessionId, participant_id: legacyParticipantId, milestone_id: legacyMilestoneId }]);
     const renamedForeignKeys = await client.query("SELECT conname FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace WHERE n.nspname=$1 AND conname IN ('camp_invites_camp_id_camps_id_fk','camp_milestones_camp_id_camps_id_fk','focus_sessions_camp_id_camps_id_fk','focus_pacts_camp_id_camps_id_fk')", [schema]);
     assert.equal(renamedForeignKeys.rowCount, 4, 'renamed relationships remain constrained');
-    const db = drizzle(client); const concurrentDb = drizzle(concurrentClient); const database = { db } as unknown as DatabaseService; const concurrentDatabase = { db: concurrentDb } as unknown as DatabaseService; const analytics = new AnalyticsService(database); const concurrentAnalytics = new AnalyticsService(concurrentDatabase); const camps = new CampService(database, analytics); const concurrentCamps = new CampService(concurrentDatabase, concurrentAnalytics); const pacts = new PactService(database, camps, analytics); const concurrentPacts = new PactService(concurrentDatabase, concurrentCamps, concurrentAnalytics); const focus = new FocusService(database, pacts, analytics); const concurrentFocus = new FocusService(concurrentDatabase, concurrentPacts, concurrentAnalytics); const memory = new MemoryService(database); const seeds = new SeedService(database); const preferences = new PreferencesService(database);
+    const db = drizzle(client); const concurrentDb = drizzle(concurrentClient); const database = { db } as unknown as DatabaseService; const concurrentDatabase = { db: concurrentDb } as unknown as DatabaseService; const analytics = createAnalytics(database); const concurrentAnalytics = createAnalytics(concurrentDatabase); const camps = createCamps(database, analytics); const concurrentCamps = createCamps(concurrentDatabase, concurrentAnalytics); const pactChanges: PactChange[] = [], pactEvents = { changes: new Subject<PactChange>() }; pactEvents.changes.subscribe(change => pactChanges.push(change)); const pacts = createPacts(database, camps, analytics, pactEvents); const concurrentPacts = createPacts(concurrentDatabase, concurrentCamps, concurrentAnalytics); const focus = createFocus(database, pacts, analytics); const concurrentFocus = createFocus(concurrentDatabase, concurrentPacts, analytics); const memory = createMemory(database); const seeds = createSeeds(database); const preferences = createPreferences(database);
     assert.equal((await camps.membership(legacyCampId, legacyAccountId))?.role, 'owner', 'migrated owner retains access');
     assert.equal((await pacts.get(legacyPactId, legacyAccountId)).id, legacyPactId, 'migrated Pact remains readable');
     assert.equal((await focus.snapshot(legacySessionId, legacyAccountId)).id, legacySessionId, 'migrated session remains readable');
     const ids = [randomUUID(), randomUUID(), randomUUID(), randomUUID()]; await db.insert(accounts).values(ids.map((id, index) => ({ id, email: `member${index}@example.test`, passwordHash: 'fixture' }))); await db.insert(profiles).values(ids.map((accountId, index) => ({ accountId, displayName: `Member ${index}`, timezone: 'Asia/Ho_Chi_Minh' })));
     const camp = await camps.create(ids[0], 'Bạn quen'); const invite = await camps.invite(camp.id, ids[0], 72); assert.equal(await camps.accept(invite.token, ids[1]), camp.id); const secondInvite = await camps.invite(camp.id, ids[0], 72); assert.equal(await camps.accept(secondInvite.token, ids[3]), camp.id);
-    const pact = await pacts.create(camp.id, ids[0], { participantIds: [ids[1]], startsAt: new Date().toISOString(), durationMinutes: 5 }, randomUUID()); await pacts.respond(pact.id, ids[1], 'accepted'); const started = await focus.startPact(pact.id, ids[0], randomUUID()); await focus.join(started.id, ids[1]);
+    const pact = await pacts.create(camp.id, ids[0], { participantIds: [ids[1]], startsAt: new Date().toISOString(), durationMinutes: 5 }, randomUUID());
+    assert.deepEqual(pactChanges.at(-1), { accountIds: [ids[1]], pactId: pact.id, change: 'invited' }, 'invite event is targeted to the selected member after creation');
+    pactChanges.length = 0;
+    await pacts.respond(pact.id, ids[1], 'accepted');
+    assert.deepEqual(pactChanges, [{ accountIds: [ids[0]], pactId: pact.id, change: 'response_changed' }], 'response event is targeted to the creator');
+    pactChanges.length = 0;
+    const started = await focus.startPact(pact.id, ids[0], randomUUID());
+    assert.deepEqual(pactChanges, [{ accountIds: [ids[1]], pactId: pact.id, change: 'started', sessionId: started.id }], 'start event is targeted to accepted invitees');
+    await focus.join(started.id, ids[1]);
     assert.equal((await focus.snapshot(started.id, ids[1])).intention, null);
     assert.equal((await focus.snapshot(started.id, ids[1])).participants.find(person => person.accountId === ids[0])?.presence, 'hidden');
     await preferences.update(ids[0], {sharePresence:true,focusPreset:{durationMinutes:25,soundscapeId:'rain'}});
@@ -74,6 +83,13 @@ test('core PostgreSQL flow preserves ownership, reconnect state, seed uniqueness
     await assert.rejects(focus.snapshot(started.id, ids[2])); await focus.checkout(started.id, ids[0], { outcome: 'progress' }); await focus.checkout(started.id, ids[1], { outcome: 'completed' }); await focus.markConnected(started.id, ids[1]); await assert.rejects(focus.setPresence(started.id, ids[1], 'break')); assert.equal((await memory.list(ids[1])).length, 1); assert.equal((await memory.list(ids[2])).length, 0);
     assert.deepEqual(await focus.recentPartners(camp.id,ids[0]),[ids[1]]);
     await assert.rejects(focus.recentPartners(camp.id,ids[2]));
+    const cancellationPact = await pacts.create(camp.id,ids[0],{participantIds:[ids[1]],startsAt:new Date(Date.now()+5*60000).toISOString(),durationMinutes:5},randomUUID());
+    pactChanges.length = 0;
+    await pacts.cancel(cancellationPact.id, ids[0]);
+    assert.deepEqual(pactChanges, [{ accountIds: [ids[1]], pactId: cancellationPact.id, change: 'cancelled' }], 'cancel event is targeted to invited participants');
+    pactChanges.length = 0;
+    await pacts.cancel(cancellationPact.id, ids[0]);
+    assert.deepEqual(pactChanges, [], 'repeated cancellation emits no duplicate event');
     const duePact = await pacts.create(camp.id,ids[0],{participantIds:[ids[1]],startsAt:new Date(Date.now()+5*60000).toISOString(),durationMinutes:5},randomUUID());
     await pacts.respond(duePact.id,ids[1],'accepted');
     await preferences.update(ids[1],{remindAcceptedPacts:true});
@@ -175,8 +191,8 @@ test('core PostgreSQL flow preserves ownership, reconnect state, seed uniqueness
     assert.equal(await focus.active(ids[1]), null, 'a removed participant releases their active slot when reconnecting');
     await focus.checkout(revokeSession.id, ids[0], { outcome: 'stopped' });
 
-    const identityStore = new IdentityStore(database);
-    const exported = await new PrivacyService(database, identityStore, new IdentityService(identityStore, readApiConfig({}))).export(ids[1]);
+    const identityStore = createIdentityStore(database);
+    const exported = await createPrivacy(database, createIdentity(identityStore, readApiConfig({})).core).export(ids[1]);
     assert.equal(exported.preferences?.remindAcceptedPacts, true, 'data export includes the owner preference');
     assert.ok(exported.pactReminders.some(receipt => receipt.pactId === duePact.id), 'data export includes the owner reminder receipt');
     await identityStore.deleteAccount(ids[1]);

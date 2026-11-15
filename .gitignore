@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-test/
 dist-web/
+output/
 **/target/
 release/
 .wrangler/
@@ -12,6 +13,8 @@ release/
 .openai/
 ml/data/private/
 ml/artifacts/
+ml/.venv/
+apps/web/.local-ai-qa/
 __pycache__/
 *.pyc
 *.egg-info/

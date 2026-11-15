@@ -16,10 +16,10 @@ import { API_CONFIG, readApiConfig } from '../src/platform/config/api-config';
 import { configureHttp } from '../src/platform/http/configure-http';
 import { DatabaseService } from '../src/platform/database/database.service';
 import { accounts, sessions } from '../src/modules/identity/infrastructure/identity.schema';
-import { sessionHash } from '../src/modules/identity/identity.service';
+import { sessionHash } from '../src/modules/identity/infrastructure/identity-crypto';
 import { camps, campMemberships } from '../src/modules/camp/infrastructure/camp.schema';
 import { campMilestones } from '../src/modules/memory/infrastructure/memory.schema';
-import { MemoryService } from '../src/modules/memory/memory.service';
+import { createMemory } from './helpers/module-fixtures';
 
 test('Camp forest: durable aggregation, membership boundaries and HTTP failures', { skip: !process.env.PYNEATH_TEST_DATABASE_URL }, async t => {
   const pool = new Pool({ connectionString: process.env.PYNEATH_TEST_DATABASE_URL });
@@ -33,7 +33,7 @@ test('Camp forest: durable aggregation, membership boundaries and HTTP failures'
       await client.query(readFileSync(resolve(folder, file), 'utf8').replaceAll('"public"', `"${schema}"`));
     }
     const db = drizzle(client), database = { db } as unknown as DatabaseService;
-    const memory = new MemoryService(database);
+    const memory = createMemory(database);
     const owner = randomUUID(), member = randomUUID(), outsider = randomUUID();
     await db.insert(accounts).values([owner, member, outsider].map((id, i) => ({ id, email: `camp-forest-${i}@example.test`, passwordHash: 'fixture' })));
     const [a, b, empty] = [randomUUID(), randomUUID(), randomUUID()];

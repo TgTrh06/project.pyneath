@@ -1,14 +1,14 @@
+import { appearanceIndex, wandererColors } from '../../../shared/scene/wandererAppearance';
 import { CampPanel } from "./CampPanel";
 import { readBrandValue } from '../../../shared/brandStorage';
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { SceneBoundary } from './SceneBoundary';
-import { appearanceIndex, lodgeMembers, wandererColors, type LodgeMember } from './lodgeState';
-import './lodge.css';
-import { parseSettings, posterFor, resolveTime, resolveWeather, times, weathers, type TimeChoice, type WeatherChoice } from './environment';
+import { SceneBoundary } from '../../../shared/scene/SceneBoundary';
+import { lodgeMembers, type LodgeMember } from './lodgeState';
+import '../../../shared/scene/lodge.css';
+import { parseSettings, posterFor, resolveTime, resolveWeather, times, weathers, type TimeChoice, type WeatherChoice } from '../../../shared/scene/environment';
 import type { CampForest } from '@pyneath/contracts';
-import { CampForestSummary } from '../../memory/CampForestSummary';
 
-const LodgeCanvas = lazy(() => import('./LodgeCanvas'));
+const LodgeCanvas = lazy(() => import('./CampCanvas'));
 const emptyMembers: LodgeMember[] = [];
 const settingKey = 'pyneath:camp-scene';
 
@@ -31,14 +31,13 @@ type Props = {
   forest?: CampForest | null;
   forestLoading?: boolean;
   forestError?: string;
-  onReloadForest?: () => void;
   onToggleMember: (id: string) => void;
   onCompose: () => void;
   onPacts: () => void;
   onManage?: () => void;
 };
 
-export function CampLodge({ header, feedback, members = emptyMembers, accountId, selected, disabled, archived, forest, forestLoading = false, forestError = '', onReloadForest, onToggleMember, onCompose, onPacts, onManage }: Props) {
+export function CampLodge({ header, feedback, members = emptyMembers, accountId, selected, disabled, archived, forest, forestLoading = false, forestError = '', onToggleMember, onCompose, onPacts, onManage }: Props) {
   const [settings, setSettings] = useState(readSettings);
   const [reducedMotion, setReducedMotion] = useState(true);
   const [visible, setVisible] = useState(false);
@@ -102,16 +101,6 @@ export function CampLodge({ header, feedback, members = emptyMembers, accountId,
   }
 
   return <section className="camp-lodge" aria-label="Quây quần dưới cây tùng" data-time={phase} data-weather={weather} data-static={settings.light || failed || !ready}>
-    <div className="lodge-stage" ref={stage}>
-      <img className="lodge-poster" src={posterFor(phase)} onError={event=>{event.currentTarget.onerror=null;if(!event.currentTarget.src.endsWith('/camp/camp-poster.webp'))event.currentTarget.src='/camp/camp-poster.webp';}} alt="Khoảng rừng dưới cây tùng lớn, những chỗ ngồi quây quanh lửa trại." width="1600" height="1000" />
-      <div className="lodge-static-weather" aria-hidden="true" />
-      {entered && !settings.light && !failed && <SceneBoundary key={attempt} onFailure={onFailure}>
-        <div className="lodge-render" style={{ opacity: ready ? 1 : 0, pointerEvents: ready ? 'auto' : 'none' }}><Suspense fallback={null}>
-          <LodgeCanvas growth={forestLoading || forestError ? [] : forest?.milestones.map(item => item.threshold)} attempt={attempt} phase={phase} weather={weather} members={people} selected={selected} animate={animate} visible={visible && pageVisible} onMember={inspect} onCompose={archived || disabled ? undefined : onCompose} onPacts={onPacts} onReady={onReady} onFailure={onFailure} />
-        </Suspense></div>
-      </SceneBoundary>}
-
-    </div>
     <div className="camp-top-overlay">{header}<details className="camp-scene-settings"><summary>Hiển thị</summary><div className="lodge-controls">
       <label>Thời điểm<select value={settings.time} onChange={e=>updateSettings({...settings,time:e.target.value as TimeChoice})}>{Object.entries(times).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
       <label>Thời tiết<select value={settings.weather} onChange={e=>updateSettings({...settings,weather:e.target.value as WeatherChoice})}>{Object.entries(weathers).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
@@ -128,8 +117,17 @@ export function CampLodge({ header, feedback, members = emptyMembers, accountId,
       <button type="button" onClick={onPacts}>Bảng hẹn</button>
       {onManage && <button type="button" onClick={onManage}>Quản lý</button>}
     </nav>
-    {onReloadForest && <CampForestSummary forest={forest ?? null} loading={forestLoading} error={forestError} onRetry={onReloadForest}/>}
     <p className="lodge-status field-hint" role="status">{failed ? <>Cảnh 3D chưa mở được. Bạn vẫn có thể dùng Camp. <button type="button" className="text-action" onClick={() => { setFailed(false); setReady(false); setAttempt(value => value + 1); updateSettings({ ...settings, light: false }); }}>Thử lại cảnh 3D</button></> : settings.light ? 'Đang dùng cảnh tĩnh để tiết kiệm tài nguyên.' : !ready ? 'Đang mở khoảng rừng… Bạn vẫn có thể hẹn một chặng.' : reducedMotion ? 'Chuyển động đã tắt theo cài đặt thiết bị.' : archived ? 'Camp đã lưu trữ. Những cuộc hẹn vẫn ở bảng hẹn.' : 'Nhân vật đại diện thành viên, không biểu thị ai đang online.'}</p>
+    </div>
+    <div className="lodge-stage" ref={stage}>
+      <img className="lodge-poster" src={posterFor(phase)} onError={event=>{event.currentTarget.onerror=null;if(!event.currentTarget.src.endsWith('/camp/camp-poster.webp'))event.currentTarget.src='/camp/camp-poster.webp';}} alt="Khoảng rừng dưới cây tùng lớn, những chỗ ngồi quây quanh lửa trại." width="1600" height="1000" />
+      <div className="lodge-static-weather" aria-hidden="true" />
+      {entered && !settings.light && !failed && <SceneBoundary key={attempt} onFailure={onFailure}>
+        <div className="lodge-render" style={{ opacity: ready ? 1 : 0, pointerEvents: ready ? 'auto' : 'none' }}><Suspense fallback={null}>
+          <LodgeCanvas growth={forestLoading || forestError ? [] : forest?.milestones.map(item => item.threshold)} attempt={attempt} phase={phase} weather={weather} members={people} selected={selected} animate={animate} visible={visible && pageVisible} onMember={inspect} onCompose={archived || disabled ? undefined : onCompose} onPacts={onPacts} onReady={onReady} onFailure={onFailure} />
+        </Suspense></div>
+      </SceneBoundary>}
+
     </div>
     {rosterOpen && <CampPanel title="Những người quanh lửa" onClose={() => setRosterOpen(false)}><div className="lodge-roster-heading"><h3>Những người trong Camp</h3><span>{people.length}/8</span></div>
     <p className="field-hint lodge-presence-note">Nhân vật đại diện cho thành viên, không biểu thị ai đang online.</p>

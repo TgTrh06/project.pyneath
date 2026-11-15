@@ -1,0 +1,7 @@
+.pact-live-notices { position:fixed; z-index:80; inset:1rem 1rem auto auto; width:min(420px,calc(100vw - 2rem)); display:grid; gap:.75rem; }
+.pact-live-notice { padding:1rem 1.25rem; border:1px solid var(--line); border-left:4px solid var(--chestnut); border-radius:var(--radius-panel); background:var(--surface); color:var(--ink); box-shadow:0 8px 28px rgb(18 36 25 / 16%); }
+.pact-live-notice p { margin:.1rem 0 .75rem; }
+.pact-live-notice .button-row { flex-wrap:wrap; }
+.pact-notification-control { margin-block:1rem; }
+.pact-notification-control .text-action { min-height:44px; }
+@media(max-width:759px) { .pact-live-notices { inset:auto 1rem calc(var(--mobile-nav-height,84px) + 1rem + env(safe-area-inset-bottom)); } }
