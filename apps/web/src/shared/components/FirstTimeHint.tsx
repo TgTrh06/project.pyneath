@@ -11,7 +11,7 @@ export function FirstTimeHint({topic,title,children,compact = false}: {topic:'fo
   const toggle = useRef<HTMLButtonElement>(null);
   const dismiss = () => { setOpen(false); try { localStorage.setItem(storageKey(topic),'done'); } catch { /* Hint remains dismissed in memory. */ } requestAnimationFrame(() => toggle.current?.focus()); };
   return <aside className="first-time-hint" aria-labelledby={id}>
-    <div className="first-time-hint__header"><strong id={id}>{title}</strong><button ref={toggle} type="button" className="text-action" aria-expanded={open} onClick={() => setOpen(value => !value)}>{open ? 'Ẩn hướng dẫn' : 'Xem hướng dẫn'}</button></div>
-    {open && <div><p>{children}</p><button type="button" className="text-action" onClick={dismiss}>Tôi đã hiểu</button></div>}
+    <div className="first-time-hint__header"><strong id={id}>{title}</strong><button ref={toggle} type="button" className="text-action" aria-expanded={open} aria-controls={`${id}-content`} onClick={() => setOpen(value => !value)}>{open ? 'Ẩn hướng dẫn' : 'Xem hướng dẫn'}</button></div>
+    {open && <div id={`${id}-content`}><p>{children}</p><button type="button" className="text-action" onClick={dismiss}>Tôi đã hiểu</button></div>}
   </aside>;
 }

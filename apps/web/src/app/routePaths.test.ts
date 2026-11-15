@@ -8,7 +8,7 @@ describe("landing and application routes", () => {
     }
   });
   it("uses Camp deep links and routes old Circle hashes to the safe fallback", () => {
-    for (const view of ["login", "register", "return", "camps", "memory", "settings"]) {
+    for (const view of ["login", "register", "return", "dashboard", "camps", "memory", "settings"]) {
       expect(resolveHashView(`#${view}`)).toBe(view);
     }
     expect(resolveHashView("#not-a-page")).toBe("return");

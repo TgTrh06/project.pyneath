@@ -3,3 +3,4 @@ export { pactActions } from './pactState';
 export { PactsView } from './PactsView';
 export { PactView } from './PactView';
 export { PactReminder } from './PactReminder';
+export { PactRealtime } from './PactRealtime';

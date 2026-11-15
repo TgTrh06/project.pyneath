@@ -3,6 +3,7 @@ import { getPreferences, updatePreferences } from '../../shared/api/clients/pref
 import { useResource } from '../../shared/api/useResource';
 import { ErrorMessage } from '../../shared/components/ui';
 import type { UpdatePreferences } from '@pyneath/contracts';
+import { ThemeSelect } from '../../shared/theme/ThemeSelect';
 
 export function PreferencesSettings() {
   const resource = useResource(getPreferences);
@@ -27,6 +28,8 @@ export function PreferencesSettings() {
   };
 
   return <section className="feature-card">
+    <div className="settings-preference-group"><h2>Giao diện</h2><p>Chọn màu nền dễ đọc cho bạn. Cảnh rừng và chuyển động có thể chỉnh riêng ở từng không gian.</p><ThemeSelect/></div>
+    <div className="settings-preference-group">
     <h2>Hiện diện trong Pact</h2>
     <p>Luôn hiển thị đã tham gia và đã khép phiên. Bạn chọn chia sẻ thêm trạng thái tập trung, nghỉ và mất kết nối.</p>
     <ErrorMessage message={resource.error} retry={resource.reload}/>
@@ -34,10 +37,11 @@ export function PreferencesSettings() {
     {resource.loading && <p role="status">Đang tải lựa chọn riêng tư…</p>}
     {preferences && <><p role="status">{preferences.sharePresence ? 'Đang chia sẻ trạng thái' : 'Chỉ hiện đã tham gia hoặc đã khép phiên'}</p>
       <button className="secondary" type="button" disabled={busy} onClick={() => void save({sharePresence:!preferences.sharePresence}, preferences.sharePresence ? 'Đã tắt chia sẻ trạng thái trong Pact.' : 'Đã bật chia sẻ trạng thái trong Pact.')}>{busy ? 'Đang lưu…' : preferences.sharePresence ? 'Tắt chia sẻ' : 'Bật chia sẻ'}</button></>}
-    {message && <p className="notice" role="status">{message}</p>}
+    {message && <p className="notice" role="status">{message}</p>}</div>
+    <div className="settings-preference-group">
     <h3>Nhắc cuộc hẹn đã nhận</h3>
     <p>Chỉ nhắc khi bạn đang mở web trong 10 phút trước giờ hẹn, tối đa một lần cho mỗi Pact. Không có email hoặc thông báo khi web đóng.</p>
     {preferences && <><p role="status">{preferences.remindAcceptedPacts ? 'Đang bật nhắc trong web' : 'Đang tắt nhắc trong web'}</p>
-      <button className="secondary" type="button" disabled={busy} onClick={() => void save({remindAcceptedPacts:!preferences.remindAcceptedPacts}, preferences.remindAcceptedPacts ? 'Đã tắt nhắc Pact.' : 'Đã bật nhắc Pact.')}>{busy ? 'Đang lưu…' : preferences.remindAcceptedPacts ? 'Tắt nhắc' : 'Bật nhắc'}</button></>}
+      <button className="secondary" type="button" disabled={busy} onClick={() => void save({remindAcceptedPacts:!preferences.remindAcceptedPacts}, preferences.remindAcceptedPacts ? 'Đã tắt nhắc Pact.' : 'Đã bật nhắc Pact.')}>{busy ? 'Đang lưu…' : preferences.remindAcceptedPacts ? 'Tắt nhắc' : 'Bật nhắc'}</button></>}</div>
   </section>;
 }

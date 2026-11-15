@@ -1,6 +1,6 @@
 export const trails = [
   { label: "Báo cáo dang dở", step: "Mở báo cáo. Viết một gạch đầu dòng.", smaller: "Chỉ mở tài liệu báo cáo." },
-  { label: "Email chưa trả lời", step: "Chọn một email. Viết câu trả lời đầu tiên.", smaller: "Chỉ mở email cần trả lời." },
+  { label: "Bài tập chưa bắt đầu", step: "Mở đề bài. Đọc câu hỏi đầu tiên.", smaller: "Chỉ mở đề bài." },
   { label: "Chưa biết bắt đầu", step: "Viết xuống một việc đang ở trong đầu.", smaller: "Viết vài từ về điều đang vướng." },
 ] as const;
 export type PreviewState = { selected: number | null; small: boolean };
