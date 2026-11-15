@@ -1,11 +1,11 @@
 .camps-page { width:100%; max-width:960px; margin-inline:auto; overflow-wrap:anywhere; }
-.camp-panel { border-radius:12px; box-shadow:none; }
+.camp-panel { border-radius:var(--radius-panel); box-shadow:none; }
 .camps-page h1 { font-size:clamp(2rem,4vw,3rem); line-height:1.2; }
 .camp-list { margin-block:2rem; }
 .camps-page .row-list { padding:0; list-style:none; }
 .camps-page .row-list > li { padding-block:1rem; border-bottom:1px solid var(--line); }
 .camps-page .row-list button { white-space:normal; overflow-wrap:anywhere; text-align:left; }
-.camp-panel { background:var(--surface); padding:clamp(1rem,3vw,2rem); border-radius:10px; margin-block:1.5rem; }
+.camp-panel { background:var(--surface); padding:clamp(1rem,3vw,2rem); border-radius:var(--radius-panel); margin-block:1.5rem; }
 .camp-detail { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:1.5rem 2rem; align-items:start; }
 .camp-detail > .page-intro, .camp-detail > .notice { grid-column:1/-1; }
 .camp-detail .pact-composer { grid-column:1; grid-row:auto / span 2; margin:0; }
@@ -14,7 +14,19 @@
 .camp-detail:not(:has(.pact-composer)) .camp-management { grid-column:1/-1; }
 .camp-management { padding-block:1rem; }
 .camps-page summary { cursor:pointer; min-height:44px; padding-block:.75rem; color:var(--chestnut); }
-.camp-invite { margin-top:1rem; padding-block:1rem; }
+.camp-members details > summary, .camp-management > summary { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--wash); color:var(--ink); list-style:none; font-weight:600; }
+.camp-members details > summary::-webkit-details-marker, .camp-management > summary::-webkit-details-marker { display:none; }
+.camp-members details > summary::after, .camp-management > summary::after { content:""; width:10px; height:10px; margin:0 4px 5px auto; border-right:2px solid var(--chestnut); border-bottom:2px solid var(--chestnut); transform:rotate(45deg); flex-shrink:0; }
+.camp-members details[open] > summary::after, .camp-management[open] > summary::after { margin-top:6px; margin-bottom:0; transform:rotate(225deg); }
+.camp-members details[open] > summary, .camp-management[open] > summary { border-color:var(--control-line); }
+.camp-members details > .row-list, .camp-management > form, .camp-management > h3, .camp-management > .button-row { margin-top:16px; }
+.camp-members .row-list > li { padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--surface); }
+.camp-members .row-list > li + li { margin-top:10px; }
+.camp-members .row-list details { margin-top:10px; }
+.camp-compose-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-block:18px; }
+.camp-compose-grid > div { min-width:0; padding:16px; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--wash); }
+.camp-compose-grid h3 { margin-top:0; }
+.camp-invite { margin-top:1rem; padding:16px; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--wash); }
 .camp-invite .invite-link { overflow-wrap:anywhere; user-select:all; }
 .pact-composer fieldset { border:0; padding:0; margin:0; min-width:0; }
 .pact-composer h3 { font-size:1rem; margin-top:1.5rem; }
@@ -22,6 +34,7 @@
 .pact-composer input[type=checkbox] { flex-shrink:0; }
 .pact-detail, .invite-detail { max-width:720px; }
 .pact-detail > .row-list { margin-block:2rem; }
+@media(max-width:650px) { .camp-compose-grid { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:800px) {
   .camp-detail { display:flex; flex-direction:column; align-items:stretch; }
   .camp-detail .page-intro { order:0; }
@@ -34,6 +47,6 @@
 
 .camp-pacts { grid-column:1/-1; width:100%; min-width:0; }
 @media(max-width:800px) { .camp-pacts { order:5; } }
-.first-time-hint { padding:1rem 1.25rem; margin:1rem 0; background:var(--wash); border-left:3px solid var(--chestnut); border-radius:6px; }
+.first-time-hint { padding:1rem 1.25rem; margin:1rem 0; background:var(--wash); border-left:3px solid var(--chestnut); border-radius:var(--radius-panel); }
 .first-time-hint__header { display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:wrap; }
 .first-time-hint p { margin:.75rem 0; line-height:1.6; }

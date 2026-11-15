@@ -16,3 +16,10 @@ export const sessionParticipants = pgTable('session_participants', {
   activeSlotAccountId: uuid('active_slot_account_id').references(() => accounts.id, { onDelete: 'cascade' }), intention: text('intention'), presence: participantPresence('presence').notNull().default('active'), outcome: checkoutOutcome('outcome'),
   joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(), checkedOutAt: timestamp('checked_out_at', { withTimezone: true }),
 }, table => [uniqueIndex('session_participants_session_account_uq').on(table.sessionId, table.accountId), uniqueIndex('session_participants_one_active_per_account_uq').on(table.activeSlotAccountId), index('session_participants_account_idx').on(table.accountId)]);
+export const studySteps = pgTable('study_steps', {
+  sessionId: uuid('session_id').notNull().references(() => focusSessions.id, { onDelete: 'cascade' }),
+  accountId: uuid('account_id').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  stepText: text('step_text').notNull(), stepStatus: text('step_status').notNull(), note: text('note'),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+}, table => [uniqueIndex('study_steps_session_account_uq').on(table.sessionId, table.accountId),
+  index('study_steps_account_recorded_idx').on(table.accountId, table.recordedAt)]);

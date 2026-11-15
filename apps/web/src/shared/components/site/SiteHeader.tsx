@@ -42,7 +42,7 @@ export function SiteHeader({ signedIn = false, showTheme = true, actions }: { si
   };
   useEffect(() => {
     if (!menuClosing) return;
-    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 200;
     const timer = window.setTimeout(() => {
       setMenuOpen(false);
       setMenuClosing(false);

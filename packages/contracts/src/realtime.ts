@@ -28,6 +28,13 @@ export const presenceUpdatedEventSchema = z.object({
     presence: participantPresenceSchema
 });
 
+export const pactChangedEventSchema = z.discriminatedUnion('change', [
+    z.object({ pactId: idSchema, change: z.literal('invited') }).strict(),
+    z.object({ pactId: idSchema, change: z.literal('response_changed') }).strict(),
+    z.object({ pactId: idSchema, change: z.literal('cancelled') }).strict(),
+    z.object({ pactId: idSchema, change: z.literal('started'), sessionId: idSchema }).strict()
+]);
+
 export const realtimeEvents = {
     subscribe: "session.subscribe",
     heartbeat: "presence.heartbeat",
@@ -35,6 +42,9 @@ export const realtimeEvents = {
     snapshot: "session.snapshot",
     sessionUpdated: "session.updated",
     presenceUpdated: "presence.updated",
+    pactChanged: "pact.changed",
     ended: "session.ended",
     error: "realtime.error"
 } as const;
+
+export type PactChangedEvent = z.infer<typeof pactChangedEventSchema>;

@@ -1,3 +1,4 @@
+import { emptyAssistanceContext } from './helpers/assistance-context';
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -40,13 +41,15 @@ test('each capability uses a single bounded JSON request, with price/privacy rou
       assert.ok(branches.every((branch: any) => branch.additionalProperties === false && branch.properties.capability.const === capability));
       assert.ok(branches.filter((branch: any) => branch.properties.message).every((branch: any) => !branch.properties.activationStep && !branch.properties.recoveryStep && !branch.properties.openSeedDraft));
       assert.equal(body.messages.length, 2); assert.equal(JSON.parse(body.messages[1].content).authorizedContext, undefined);
+      assert.match(body.messages[0].content, /Công nghệ thông tin và kỹ thuật phần mềm/);
+      assert.match(body.messages[0].content, /cấu trúc dữ liệu và giải thuật/);
       return Response.json(completion(output));
     });
     assert.equal((await provider().generate(request)).kind, 'validated'); assert.equal(calls, 1); t.mock.restoreAll();
   }
 });
 
-test('only selected context is read once, included as untrusted data, without extra model calls', async t => {
+test('server-supplied context is read once, included as untrusted data, without extra model calls', async t => {
   const reads: string[] = []; let calls = 0;
   t.mock.method(OpenRouterHttpTransport.prototype, 'request', async (options: RequestInit) => {
     calls++; const body = JSON.parse(String(options.body));
@@ -102,7 +105,7 @@ test('quota exhaustion and unavailable provider preserve the service fallback wi
   let calls = 0;
   t.mock.method(OpenRouterHttpTransport.prototype, 'request', async () => { calls++; throw new Error('private provider detail'); });
   const analytics = { reserveAssistanceRequest: async () => null, record: async () => {} } as unknown as Analytics;
-  const service = new AssistanceService(assistanceConfiguration(config()), provider(), analytics);
+  const service = new AssistanceService(assistanceConfiguration(config()), provider(), analytics, emptyAssistanceContext);
   assert.equal((await service.suggest('owner', input)).status, 'fallback'); assert.equal(calls, 0);
   analytics.reserveAssistanceRequest = async () => 'a96f77d6-070b-4425-a095-c8e3009d39eb';
   const result = await service.suggest('owner', input); assert.equal(result.status, 'fallback');

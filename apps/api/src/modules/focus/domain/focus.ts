@@ -16,7 +16,9 @@ export interface FocusSnapshot {
 }
 export interface PresenceChange { sessionId: string; accountId: string; presence: Presence; }
 export interface SoloInput { intention: string; durationMinutes: 5 | 10 | 25 | 50; }
-export interface CheckoutInput { outcome: Outcome; openSeed?: string | null; }
+export interface StudyStepInput { stepText: string; stepStatus: 'completed' | 'partial' | 'not_started'; note?: string | null; }
+export interface StudyStepRecord extends StudyStepInput { sessionId: string; recordedAt: Date; updatedAt: Date; }
+export interface CheckoutInput { outcome: Outcome; openSeed?: string | null; studyStep?: StudyStepInput; }
 export type SessionHistory = Pick<FocusSession, 'id' | 'kind' | 'startedAt' | 'endsAt' | 'status'> & { outcome: Outcome | null };
 export class ActiveSessionCollision extends Error { constructor() { super('Active session or request already exists'); } }
 export const activePresence: StoredPresence[] = ['active', 'break', 'disconnected'];

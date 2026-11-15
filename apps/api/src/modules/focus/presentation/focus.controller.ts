@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Param, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
-import { checkOutSchema, startSoloSessionSchema } from '@pyneath/contracts';
+import { checkOutSchema, recordStudyStepSchema, startSoloSessionSchema } from '@pyneath/contracts';
 import { body, idempotencyKey, principal } from '../../../platform/http/request';
 import { PACT_ACCESS, type PactAccess } from '../../pact/public-api';
 import { PROFILE_ACCESS, type ProfileAccess } from '../../profile/public-api';
@@ -65,4 +65,14 @@ export class FocusController {
   @Post('focus-sessions/:sessionId/join') async join(@Param('sessionId') id: string, @Req() req: Request) { return { session: await this.focus.join(id, principal(req).id) }; }
   @Post('pacts/:pactId/start') async startPact(@Param('pactId') id: string, @Req() req: Request) { return { session: await this.focus.startPact(id, principal(req).id, idempotencyKey(req)) }; }
   @Get('me/focus-history') async history(@Req() req: Request) { return { sessions: await this.focus.history(principal(req).id) }; }
+  @Get('me/study-dashboard') async studyDashboard(@Req() req: Request) {
+    const actor = principal(req), profile = await this.profiles.get(actor.id);
+    const raw = req.query.offset;
+    const offset = typeof raw === 'string' && /^\d{1,6}$/.test(raw) ? Number(raw) : 0;
+    const days = req.query.days === '30' ? 30 : 7;
+    return this.focus.studyDashboard(actor.id, profile?.timezone ?? 'UTC', offset, days);
+  }
+  @Post('focus-sessions/:sessionId/study-step') async recordStep(@Param('sessionId') id: string, @Req() req: Request) {
+    return { step: await this.focus.recordStudyStep(id, principal(req).id, body(recordStudyStepSchema, req)) };
+  }
 }

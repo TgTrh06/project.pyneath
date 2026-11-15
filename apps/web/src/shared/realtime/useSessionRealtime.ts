@@ -1,6 +1,6 @@
 import { expireSession } from "../auth/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { focusSessionSchema, realtimeEvents, type FocusSession } from "@pyneath/contracts";
+import { focusSessionSchema, presenceUpdatedEventSchema, realtimeEvents, type FocusSession } from "@pyneath/contracts";
 import { io, type Socket } from "socket.io-client";
 import { ApiRequestError } from '../api/transport';
 import { getSession } from '../api/clients/focus';
@@ -8,7 +8,8 @@ import { realtimeUrl } from '../api/config';
 
 type Connection = "connecting" | "live" | "reconnecting" | "offline";
 
-export function useSessionRealtime(sessionId: string | undefined, onSnapshot: (value: FocusSession) => void, enabled = true) {
+export function useSessionRealtime(sessionId: string | undefined, onSnapshot: (value: FocusSession) => void, enabled = true,
+  onPresenceUpdate?: (value: { sessionId: string; accountId: string; presence: FocusSession['participants'][number]['presence'] }) => void) {
   const [connection, setConnection] = useState<Connection>("connecting");
   const [error, setError] = useState("");
   const [authorized, setAuthorized] = useState(true);
@@ -106,8 +107,11 @@ export function useSessionRealtime(sessionId: string | undefined, onSnapshot: (v
     socket.on(realtimeEvents.snapshot, snapshot);
     socket.on(realtimeEvents.sessionUpdated, snapshot);
     socket.on(realtimeEvents.ended, snapshot);
-    socket.on(realtimeEvents.presenceUpdated, (value: { sessionId: string }) => {
-      if (value.sessionId === sessionId) void refresh();
+    socket.on(realtimeEvents.presenceUpdated, (raw: unknown) => {
+      const parsed = presenceUpdatedEventSchema.safeParse(raw);
+      if (!parsed.success || parsed.data.sessionId !== sessionId) return;
+      onPresenceUpdate?.(parsed.data);
+      void refresh();
     });
     socket.on(realtimeEvents.error, (failure: { code?: string }) => {
       if (failure?.code === 'UNAUTHENTICATED') {
@@ -169,7 +173,7 @@ export function useSessionRealtime(sessionId: string | undefined, onSnapshot: (v
       document.removeEventListener("visibilitychange", visible);
       window.removeEventListener("online", syncNow);
     };
-  }, [sessionId, onSnapshot, enabled]);
+  }, [sessionId, onSnapshot, enabled, onPresenceUpdate]);
 
   const setPresence = (presence: "active" | "break") => {
     if (connection !== "live" || !authorized) return;

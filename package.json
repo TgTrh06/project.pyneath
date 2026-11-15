@@ -4,7 +4,9 @@
   "private": true,
   "description": "A private mobile-first ritual for starting and returning alone or with trusted people.",
   "packageManager": "pnpm@10.32.1",
-  "engines": { "node": ">=22.12.0" },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "pnpm --filter @pyneath/web dev",
     "dev:api": "pnpm --filter @pyneath/api dev",
@@ -16,10 +18,17 @@
     "db:local:logs": "docker compose -f compose.local.yml logs -f postgres",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
-    "test": "pnpm -r --if-present test && node --test scripts/check-audit.test.cjs",
+    "test:tooling": "node --test scripts/*.test.cjs",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium firefox webkit",
+    "test:load:core": "node scripts/load-core.cjs",
+    "test:restore": "node scripts/verify-database-restore.cjs",
+    "test": "pnpm test:tooling && pnpm -r --if-present test",
     "audit:security": "node scripts/check-audit.cjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.65.1",
     "typescript": "^5.9.3"
   }
 }

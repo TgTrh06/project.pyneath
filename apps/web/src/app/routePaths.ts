@@ -1,6 +1,6 @@
 import type { AppRoute, View } from "../shared/types/domain";
 
-const appViews = new Set<View>(["login", "register", "return", "camps", "pacts", "memory", "settings"]);
+const appViews = new Set<View>(["login", "register", "return", "dashboard", "camps", "pacts", "memory", "settings"]);
 const landingSections = new Set(["", "home", "how-it-works", "experience", "before-you-start", "landing-main"]);
 
 export function resolveHashView(hash: string): View {

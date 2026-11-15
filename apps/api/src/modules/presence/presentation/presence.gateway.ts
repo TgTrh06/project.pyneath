@@ -2,7 +2,7 @@ import { BusinessError } from '../../../shared/kernel/business-error';
 import { ConflictException, ForbiddenException, Injectable, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConnectedSocket, MessageBody, OnGatewayInit, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
-import { heartbeatSchema, realtimeEvents, setPresenceSchema, subscribeSessionSchema } from '@pyneath/contracts';
+import { heartbeatSchema, pactChangedEventSchema, realtimeEvents, setPresenceSchema, subscribeSessionSchema } from '@pyneath/contracts';
 import { API_CONFIG, ApiConfig } from '../../../platform/config/api-config';
 import { Inject } from '@nestjs/common';
 import { IDENTITY_ACCESS, type IdentityAccess } from '../../identity/public-api';
@@ -10,6 +10,7 @@ import { sessionTokenFromCookie } from '../../../platform/http/session-cookie';
 import type { EventSubscription } from '../../../shared/kernel/events';
 import { FOCUS_ACCESS, type FocusAccess } from '../../focus/public-api';
 import { PREFERENCES_ACCESS, type PreferencesAccess } from '../../preferences/public-api';
+import { PACT_ACCESS, type PactAccess } from '../../pact/public-api';
 
 type PineSocket = Socket & { data: { account?: { id: string; email: string }; sessions?: Set<string> } };
 @Injectable()
@@ -24,7 +25,10 @@ export class PresenceGateway implements OnGatewayInit, OnGatewayDisconnect, OnMo
   private subscription?: EventSubscription;
   private presenceSubscription?: EventSubscription;
   private preferenceSubscription?: EventSubscription;
-  constructor(@Inject(IDENTITY_ACCESS) private readonly identity: IdentityAccess, @Inject(FOCUS_ACCESS) private readonly focus: FocusAccess, @Inject(PREFERENCES_ACCESS) private readonly preferences: PreferencesAccess, @Inject(API_CONFIG) private readonly config: ApiConfig) {}
+  private pactSubscription?: EventSubscription;
+  constructor(@Inject(IDENTITY_ACCESS) private readonly identity: IdentityAccess, @Inject(FOCUS_ACCESS) private readonly focus: FocusAccess,
+    @Inject(PREFERENCES_ACCESS) private readonly preferences: PreferencesAccess, @Inject(API_CONFIG) private readonly config: ApiConfig,
+    @Inject(PACT_ACCESS) private readonly pacts: PactAccess) {}
   onModuleInit() {
     this.identitySubscriptions.push(
       this.identity.revokedSessions.subscribe(hash => {
@@ -40,10 +44,11 @@ export class PresenceGateway implements OnGatewayInit, OnGatewayDisconnect, OnMo
     this.subscription = this.focus.changes.subscribe(id => void this.publish(id));
     this.presenceSubscription = this.focus.presenceChanges.subscribe(change => void this.publishPresence(change));
     this.preferenceSubscription = this.preferences.presenceSharingChanges.subscribe(accountId => void this.refreshSharedSession(accountId));
+    this.pactSubscription = this.pacts.changes.subscribe(change => void this.publishPactChange(change));
   }
   onModuleDestroy() {
     this.destroyed = true;
-    this.subscription?.unsubscribe(); this.presenceSubscription?.unsubscribe(); this.preferenceSubscription?.unsubscribe();
+    this.subscription?.unsubscribe(); this.presenceSubscription?.unsubscribe(); this.preferenceSubscription?.unsubscribe(); this.pactSubscription?.unsubscribe();
     this.identitySubscriptions.forEach(subscription => subscription.unsubscribe());
     this.expiryTimers.forEach(timer => clearTimeout(timer)); this.expiryTimers.clear();
     this.disconnectTimers.forEach(timer => clearTimeout(timer)); this.disconnectTimers.clear();
@@ -154,6 +159,14 @@ export class PresenceGateway implements OnGatewayInit, OnGatewayDisconnect, OnMo
     }
   }
   private room(id: string) { return `session:${id}`; }
+  private async publishPactChange(change: import('../../pact/application/pact.ports').PactChange) {
+    const recipients = new Set(change.accountIds);
+    const payload = pactChangedEventSchema.parse({ pactId: change.pactId, change: change.change, ...(change.sessionId ? { sessionId: change.sessionId } : {}) });
+    for (const socket of [...this.sockets.values()]) {
+      if (!recipients.has(socket.data.account?.id ?? '') || !await this.authenticated(socket)) continue;
+      socket.emit(realtimeEvents.pactChanged, payload);
+    }
+  }
   private fail(socket: PineSocket, code: string) { socket.emit(realtimeEvents.error, { code, message: 'Realtime request could not be completed.' }); }
   private async unsubscribe(socket:PineSocket,sessionId:string) { socket.data.sessions?.delete(sessionId); await socket.leave(this.room(sessionId)); }
   private errorCode(error: unknown, fallback: string) {
@@ -176,7 +189,9 @@ export class PresenceGateway implements OnGatewayInit, OnGatewayDisconnect, OnMo
       try {
         const snapshot = await this.focus.snapshot(change.sessionId, account.id);
         const current = snapshot.participants.find(person => person.accountId === change.accountId);
-        if (current && current.presence !== 'checked_out' && await this.authenticated(socket)) {
+        // Presence is opt-in. The snapshot projection hides another member's
+        // live state unless that member enabled sharing; never bypass it here.
+        if (current && current.presence !== 'hidden' && await this.authenticated(socket)) {
           socket.emit(realtimeEvents.presenceUpdated, {sessionId:change.sessionId,accountId:change.accountId,presence:current.presence});
         }
       } catch {

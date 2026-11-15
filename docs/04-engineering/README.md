@@ -18,4 +18,6 @@ Target architecture is a NestJS modular monolith, PostgreSQL + Drizzle and a cli
 
 Model training and assistance contracts are governed in [Pyneath Assistance and ML](../05-machine-learning/README.md).
 
+`microservices-architecture.md` and `architecture-options.md` are retained as conditional architecture proposals; the current choice is the modular monolith described in [System Architecture](system-architecture.md). ADRs record decisions at the time they were made. Read the ADR index for superseded status before treating an old decision as current.
+
 The API now follows the target module vocabulary. PostgreSQL-backed end-to-end tests remain opt-in and require an explicitly disposable database.

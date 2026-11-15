@@ -58,3 +58,16 @@ it('unmount clears retry timers and listeners', async () => {
   await vi.advanceTimersByTimeAsync(30000);
   expect(h.handlers.size).toBe(0); expect(h.emit.mock.calls.length).toBe(before);
 });
+
+it('validates and immediately forwards visible participant presence updates', () => {
+  const onPresenceUpdate = vi.fn();
+  const sessionId = 'f9194eb2-3b02-47da-97fe-9ac81b63a5ca';
+  const accountId = '9e52c17c-999d-4add-88b7-89c1b63a79ef';
+  useSessionRealtime(sessionId, vi.fn(), true, onPresenceUpdate);
+  h.handlers.get(realtimeEvents.presenceUpdated)?.({ sessionId, accountId, presence: 'break' });
+  expect(onPresenceUpdate).toHaveBeenCalledWith({ sessionId, accountId, presence: 'break' });
+  onPresenceUpdate.mockClear();
+  h.handlers.get(realtimeEvents.presenceUpdated)?.({ sessionId, accountId, presence: 'not-a-state' });
+  h.handlers.get(realtimeEvents.presenceUpdated)?.({ sessionId: 'other', accountId, presence: 'break' });
+  expect(onPresenceUpdate).not.toHaveBeenCalled();
+});

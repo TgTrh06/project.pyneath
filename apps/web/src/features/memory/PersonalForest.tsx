@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useReducer, useRef, 
 import { defaultForestArrangement, forestArrangementSchema, type ForestArrangement, type ForestThreshold, type PersonalForest, type PersonalMilestone } from '@pyneath/contracts';
 import { getPersonalForest } from '../../shared/api/clients/memory';
 import { getPreferences, saveForestArrangement } from '../../shared/api/clients/preferences';
-import { ForestPreview } from './ForestPreview';
 import { formatTime } from '../../shared/time';
 import { MartenIllustration } from '../../shared/components/marten/MartenIllustration';
 import { forestReactionDuration, forestReactionReducer, forestReactions, initialForestReaction, type ForestReaction } from './forestReaction';
@@ -129,22 +128,6 @@ export function ForestArrival() {
     <div><p role="status">{forestMemories[notice.threshold].arrival}</p>
       <a href="#memory" onClick={dismiss}>Xem dấu chân</a></div>
   </div>;
-}
-
-export function PersonalForestSummary() {
-  const { data, loading, error, refresh, arrangement } = usePersonalForest();
-  useEffect(() => { void refresh(); }, [refresh]);
-  const latest = data?.milestones.at(-1);
-  return <section className="personal-forest-summary" aria-label="Góc rừng của bạn">
-    <ForestArrival/>
-    {data && <div className="personal-forest-summary-row">
-      {arrangement ? <ForestPreview earned={data.milestones.map(item => item.threshold)} arrangement={arrangement}/> : <ForestMemoryMark threshold={latest?.threshold ?? 0}/>}
-      <div><p>{latest ? forestMemories[latest.threshold].title : 'Một góc rừng đang đợi bạn.'}</p>
-        <a href="#memory">Xem dấu chân của bạn</a></div>
-    </div>}
-    {loading && !data && <p role="status" className="field-hint">Đang mở dấu chân…</p>}
-    {error && <p className="field-hint">{error} <button className="text-action" disabled={loading} onClick={() => void refresh()}>Tải lại dấu chân</button></p>}
-  </section>;
 }
 
 export function PersonalForestJournal() {

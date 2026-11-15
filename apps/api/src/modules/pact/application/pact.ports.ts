@@ -2,8 +2,16 @@ import type { PactListQuery } from '@pyneath/contracts';
 import type { TransactionContext } from '../../../shared/kernel/unit-of-work';
 import type { PageCursor } from '../../../shared/kernel/pagination';
 import type { PactRecord, PactParticipant, PactResponse, PactStatus, UpcomingPact, DueReminder, PactListRow } from '../domain/pact';
+import type { EventChannel, EventSource } from '../../../shared/kernel/events';
+
+export type PactChangeKind = 'invited' | 'response_changed' | 'cancelled' | 'started';
+export type PactChange = { accountIds: string[]; pactId: string; change: PactChangeKind; sessionId?: string };
+export interface PactEvents { changes: EventChannel<PactChange>; }
+export const PACT_EVENTS = Symbol('PACT_EVENTS');
 
 export interface PactAccess {
+  readonly changes: EventSource<PactChange>;
+  announceStarted(pactId: string, sessionId: string): Promise<void>;
   lock(pactId: string, context: TransactionContext): Promise<PactRecord | undefined>;
   expire(pactId: string, now: Date, context: TransactionContext): Promise<void>;
   activate(pactId: string, sessionId: string, now: Date, context: TransactionContext): Promise<void>;

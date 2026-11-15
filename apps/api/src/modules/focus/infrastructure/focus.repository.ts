@@ -10,10 +10,73 @@ import { profiles } from '../../profile/infrastructure/profile.schema';
 import { accountPreferences } from '../../preferences/infrastructure/preferences.schema';
 import type { FocusRepository } from '../application/focus.ports';
 import { ActiveSessionCollision, activePresence, type Outcome, type Presence } from '../domain/focus';
-import { focusSessions, sessionParticipants } from './focus.schema';
+import { focusSessions, sessionParticipants, studySteps } from './focus.schema';
+import type { StudyStepInput } from '../domain/focus';
 
 @Injectable()
 export class DrizzleFocusRepository implements FocusRepository {
+  async hasStudyStep(sessionId: string, accountId: string, context: TransactionContext) {
+    return (await this.transactions.reader(context).select({ sessionId: studySteps.sessionId }).from(studySteps)
+      .where(and(eq(studySteps.sessionId, sessionId), eq(studySteps.accountId, accountId))).limit(1)).length > 0;
+  }
+  async saveStudyStep(sessionId: string, accountId: string, input: StudyStepInput, now: Date, context: TransactionContext) {
+    const [row] = await this.transactions.reader(context).insert(studySteps).values({ sessionId, accountId, ...input,
+      note: input.note || null, recordedAt: now, updatedAt: now }).onConflictDoUpdate({
+      target: [studySteps.sessionId, studySteps.accountId], set: { ...input, note: input.note || null, updatedAt: now }
+    }).returning();
+    return { ...row, stepStatus: row.stepStatus as StudyStepInput['stepStatus'] };
+  }
+  async studySteps(accountId: string, offset: number) {
+    const rows = await this.transactions.reader().select({ sessionId: studySteps.sessionId, stepText: studySteps.stepText,
+      stepStatus: studySteps.stepStatus, note: studySteps.note, recordedAt: studySteps.recordedAt, updatedAt: studySteps.updatedAt })
+      .from(studySteps).where(eq(studySteps.accountId, accountId))
+      .orderBy(desc(studySteps.recordedAt), desc(studySteps.sessionId)).limit(11).offset(offset);
+    return rows.map(row => ({ ...row, stepStatus: row.stepStatus as StudyStepInput['stepStatus'] }));
+  }
+  async studyCounts(accountId: string, timezone: string, now: Date) {
+    const [row] = await this.transactions.reader().select({
+      completedSteps: sql<number>`count(*) filter (where ${studySteps.stepStatus} = 'completed')::int`,
+      recordedSessions: sql<number>`count(*)::int`
+    }).from(studySteps).where(and(eq(studySteps.accountId, accountId),
+      sql`(${studySteps.recordedAt} AT TIME ZONE ${timezone})::date between ((${now}::timestamptz AT TIME ZONE ${timezone})::date - 6) and (${now}::timestamptz AT TIME ZONE ${timezone})::date`));
+    return row;
+  }
+  async studyTimeline(accountId: string, timezone: string, now: Date, days: number) {
+    const today = sql`(${now}::timestamptz AT TIME ZONE ${timezone})::date`;
+    const stepDay = sql`(${studySteps.recordedAt} AT TIME ZONE ${timezone})::date`;
+    const sessionDay = sql`(${focusSessions.startedAt} AT TIME ZONE ${timezone})::date`;
+    const steps = await this.transactions.reader().select({ date: sql<string>`${stepDay}::text`,
+        completed: sql<number>`count(*) filter (where ${studySteps.stepStatus} = 'completed')::int`,
+        partial: sql<number>`count(*) filter (where ${studySteps.stepStatus} = 'partial')::int`,
+        notStarted: sql<number>`count(*) filter (where ${studySteps.stepStatus} = 'not_started')::int` })
+        .from(studySteps).where(and(eq(studySteps.accountId, accountId),
+          sql`${stepDay} between ${today} - ${days - 1}::int and ${today}`)).groupBy(sql`1`);
+    const sessions = await this.transactions.reader().select({ date: sql<string>`${sessionDay}::text`,
+        soloSessions: sql<number>`count(*) filter (where ${focusSessions.kind} = 'solo')::int`,
+        campSessions: sql<number>`count(*) filter (where ${focusSessions.kind} = 'pact')::int` })
+        .from(sessionParticipants).innerJoin(focusSessions, eq(focusSessions.id, sessionParticipants.sessionId))
+        .where(and(eq(sessionParticipants.accountId, accountId), eq(focusSessions.status, 'completed'),
+          sql`${sessionDay} between ${today} - ${days - 1}::int and ${today}`)).groupBy(sql`1`);
+    const byDate = new Map<string, { date: string; completed: number; partial: number; notStarted: number; soloSessions: number; campSessions: number }>();
+    const entry = (date: string) => {
+      if (!byDate.has(date)) byDate.set(date, { date, completed: 0, partial: 0, notStarted: 0, soloSessions: 0, campSessions: 0 });
+      return byDate.get(date)!;
+    };
+    for (const row of steps) Object.assign(entry(row.date), { completed: row.completed, partial: row.partial, notStarted: row.notStarted });
+    for (const row of sessions) Object.assign(entry(row.date), { soloSessions: row.soloSessions, campSessions: row.campSessions });
+    return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  }
+  async exportStudySteps(accountId: string) {
+    const rows = await this.transactions.reader().select().from(studySteps).where(eq(studySteps.accountId, accountId));
+    return rows.map(row => ({ ...row, stepStatus: row.stepStatus as StudyStepInput['stepStatus'] }));
+  }
+  unrecordedSoloSessions(accountId: string) {
+    return this.transactions.reader().select({ id: focusSessions.id, intention: sessionParticipants.intention, startedAt: focusSessions.startedAt })
+      .from(sessionParticipants).innerJoin(focusSessions, eq(focusSessions.id, sessionParticipants.sessionId))
+      .leftJoin(studySteps, and(eq(studySteps.sessionId, focusSessions.id), eq(studySteps.accountId, accountId)))
+      .where(and(eq(sessionParticipants.accountId, accountId), eq(focusSessions.kind, 'solo'), eq(focusSessions.status, 'completed'), isNull(studySteps.sessionId)))
+      .orderBy(desc(focusSessions.startedAt)).limit(10);
+  }
   async readOwnContext(accountId: string) {
     const [row] = await this.transactions.reader().select({ kind: focusSessions.kind, intention: sessionParticipants.intention,
       durationMinutes: focusSessions.durationMinutes, endsAt: focusSessions.endsAt, presence: sessionParticipants.presence })

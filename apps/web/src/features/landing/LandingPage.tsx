@@ -29,27 +29,27 @@ export function LandingPage({ signedIn = false }: { signedIn?: boolean }) {
     <main id="landing-main" tabIndex={-1}>
       <section className="lp-hero lp-container" aria-labelledby="lp-title">
         <p className="lp-kicker"><span className="lp-small-line" /> MỘT KHOẢNG YÊN ĐỂ BẮT ĐẦU</p>
-        <div className="lp-hero-copy">
+        <div className="lp-hero-grid"><div className="lp-hero-copy">
           <h1 id="lp-title">Không cần làm hết.<br /><span>Một bước thôi.</span></h1>
           <div className="lp-hero-aside">
-            <p className="lp-intro">Chọn một việc nhỏ, dành cho nó vài phút. Một mình hoặc cùng người quen, dưới tán thông.</p>
+            <p className="lp-intro">Một góc tự học cho học sinh, sinh viên: chọn một bước nhỏ, dành cho nó vài phút rồi quay lại khi sẵn sàng.</p>
             <a className="lp-button" href={entryHref}>{cta}</a>
             <p className="lp-caption">{signedIn ? "Một khoảng yên để tiếp tục hành trình." : "Tạo tài khoản Wanderer để bắt đầu."}</p>
           </div>
         </div>
 
+        <TrailPreview /></div>
         <div className="lp-hero-foot"><a href="#how-it-works">Khám phá cách hoạt động <span aria-hidden="true">↓</span></a></div>
       </section>
 
       <section className="lp-how lp-container" id="how-it-works" tabIndex={-1} aria-labelledby="lp-how-title">
         <div className="lp-section-heading"><p className="lp-kicker">TỪ BỊ KẸT ĐẾN BẮT ĐẦU</p><h2 id="lp-how-title">Một việc. Vài phút.<br /><span>Một điểm để tiếp tục.</span></h2></div>
         <ol className="lp-steps">
-          <li><span className="lp-step-number" aria-hidden="true">01</span><div><h3>Đặt xuống điều đang nghĩ.</h3><p>Viết một việc nhỏ bạn muốn bắt đầu. Nội dung chỉ riêng bạn nhìn thấy.</p></div></li>
+          <li><span className="lp-step-number" aria-hidden="true">01</span><div><h3>Đặt xuống điều đang nghĩ.</h3><p>Viết một bước học nhỏ bạn muốn bắt đầu. Nội dung chỉ riêng bạn nhìn thấy.</p></div></li>
           <li><span className="lp-step-number" aria-hidden="true">02</span><div><h3>Dành cho nó vài phút.</h3><p>Chọn 5, 10, 25 hoặc 50 phút. Không cần làm xong khi hết giờ.</p></div></li>
           <li><span className="lp-step-number" aria-hidden="true">03</span><div><h3>Để lại một điểm tiếp tục.</h3><p>Khép lại bằng một câu nhắn cho lần sau. Quay lại và tiếp tục từ đó.</p></div></li>
         </ol>
         <a className="lp-text-link" href={entryHref}>{signedIn ? "Về không gian của bạn" : "Bắt đầu với tài khoản của bạn"}</a>
-        <TrailPreview />
       </section>
 
       <section className="lp-return" id="experience" tabIndex={-1} aria-labelledby="lp-return-title">
@@ -62,9 +62,9 @@ export function LandingPage({ signedIn = false }: { signedIn?: boolean }) {
       <section className="lp-before lp-container" id="before-you-start" tabIndex={-1} aria-labelledby="lp-before-title">
         <div><p className="lp-kicker">TRƯỚC KHI BẮT ĐẦU</p><h2 id="lp-before-title">Một vài điều<br />nói rõ với nhau.</h2><p>Pyneath đang được phát triển. Đây là lời mời trải nghiệm những bước đầu.</p></div>
         <div className="lp-questions">
-          <details><summary>Tài khoản Wanderer có gì?</summary><p>Một không gian cho phiên tập trung riêng, điểm tiếp tục và những cuộc hẹn cùng người quen. Khối tương tác phía trên là minh họa dựng sẵn, không lưu dữ liệu và không tạo gợi ý bằng AI.</p></details>
-          <details><summary>Pyneath có thay thế hỗ trợ chuyên môn không?</summary><p>Không. Pyneath hỗ trợ tự quản lý và tập trung; không chẩn đoán, điều trị hay đưa ra tư vấn y khoa.</p></details>
-          <details><summary>Có cần làm xong khi hết giờ?</summary><p>Không cần. Đồng hồ khép lại một chặng, không đánh giá kết quả. Bạn có thể để lại điểm tiếp tục rồi quay lại khi sẵn sàng.</p></details>
+          <details><summary>Tài khoản Wanderer có gì?</summary><p>Tài khoản Wanderer có <strong className="lp-highlight">các phiên Focus riêng</strong>, <strong className="lp-highlight">Open Seed để ghi lại điểm bắt đầu lần sau</strong>, cùng <strong className="lp-highlight">dấu chân và kỷ niệm cá nhân</strong>. Bạn cũng có thể tạo <strong className="lp-highlight">Camp riêng</strong> để hẹn <strong className="lp-highlight">các phiên Focus cùng người quen</strong>. <strong className="lp-highlight">Khi hỗ trợ AI được bật</strong>, bạn có thể xin gợi ý một bước để bắt đầu, cách tiếp tục hoặc một câu Open Seed; <strong className="lp-highlight">hãy xem và chỉnh bản nháp trước khi chọn dùng</strong>. Khối tương tác phía trên là minh họa dựng sẵn, không lưu dữ liệu hay tạo gợi ý bằng AI.</p></details>
+          <details><summary>Pyneath có thay thế hỗ trợ chuyên môn không?</summary><p>Không. Pyneath hỗ trợ tự quản lý và tập trung; <strong className="lp-highlight">không chẩn đoán, điều trị hay đưa ra tư vấn y khoa</strong>.</p></details>
+          <details><summary>Có cần làm xong khi hết giờ?</summary><p><strong className="lp-highlight">Không cần.</strong> Đồng hồ khép lại một chặng, <strong className="lp-highlight">không đánh giá kết quả</strong>. Bạn có thể <strong className="lp-highlight">để lại điểm tiếp tục rồi quay lại khi sẵn sàng</strong>.</p></details>
         </div>
       </section>
 

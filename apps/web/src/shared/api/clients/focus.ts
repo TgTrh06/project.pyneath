@@ -1,5 +1,6 @@
 import { request, mutation } from '../transport';
-import type { FocusSession, ReturnState } from '@pyneath/contracts';
+import type { FocusSession, ReturnState, StudyStepInput } from '@pyneath/contracts';
+import { studyDashboardSchema } from '@pyneath/contracts';
 
 export const getReturnState = () => request<ReturnState>("/me/return");
 
@@ -9,7 +10,9 @@ export const getSession = (id: string) => request<{ session: FocusSession }>(`/f
 
 export const joinSession = (id: string) => mutation<{ session: FocusSession }>(`/focus-sessions/${id}/join`, "POST");
 
-export const checkOut = (id: string, value: { outcome: "completed" | "progress" | "stuck" | "stopped"; openSeed?: string | null }) => mutation<{ session: FocusSession }>(`/focus-sessions/${id}/check-out`, "POST", value);
+export const checkOut = (id: string, value: { outcome: "completed" | "progress" | "stuck" | "stopped"; openSeed?: string | null; studyStep?: StudyStepInput }) => mutation<{ session: FocusSession }>(`/focus-sessions/${id}/check-out`, "POST", value);
+export const recordStudyStep = (id: string, value: StudyStepInput & { openSeed?: string | null }) => mutation(`/focus-sessions/${id}/study-step`, 'POST', value);
+export const getStudyDashboard = async (offset = 0, days: 7 | 30 = 7) => studyDashboardSchema.parse(await request(`/me/study-dashboard?offset=${offset}&days=${days}`));
 
 export const getRecentPartners = (id: string) => request<{ accountIds: string[] }>(`/camps/${id}/recent-partners`);
 
