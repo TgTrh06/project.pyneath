@@ -5,12 +5,34 @@ export const focusSessionStatusSchema = z.enum(["active", "completed", "cancelle
 // `hidden` is a projection only. It is never persisted or accepted by presence.set.
 export const participantPresenceSchema = z.enum(["active", "break", "disconnected", "checked_out", "hidden"]);
 export const checkoutOutcomeSchema = z.enum(["completed", "progress", "stuck", "stopped"]);
+export const studyStepStatusSchema = z.enum(["completed", "partial", "not_started"]);
+export const studyStepInputSchema = z.object({
+    stepText: z.string().trim().min(1).max(280),
+    stepStatus: studyStepStatusSchema,
+    note: z.string().trim().max(500).nullable().optional()
+}).strict();
+export type StudyStepInput = z.infer<typeof studyStepInputSchema>;
+export const studyStepRecordSchema = studyStepInputSchema.extend({
+    sessionId: idSchema, recordedAt: dateTimeSchema, updatedAt: dateTimeSchema
+});
+export const recordStudyStepSchema = studyStepInputSchema.extend({
+    openSeed: z.string().trim().min(1).max(500).nullable().optional()
+}).strict();
 
 export const openSeedSchema = z.object({
     id: idSchema,
     text: z.string(),
     sourceSessionId: idSchema.nullable(),
     updatedAt: dateTimeSchema
+});
+export const studyDashboardSchema = z.object({
+    completedSteps: z.number().int().nonnegative(), recordedSessions: z.number().int().nonnegative(),
+    timezone: z.string(), steps: z.array(studyStepRecordSchema), hasMore: z.boolean(), openSeed: openSeedSchema.nullable(),
+    unrecordedSessions: z.array(z.object({ id: idSchema, intention: z.string().nullable(), startedAt: dateTimeSchema })),
+    progress: z.object({ periodDays: z.union([z.literal(7), z.literal(30)]), today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        days: z.array(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), completed: z.number().int().nonnegative(),
+            partial: z.number().int().nonnegative(), notStarted: z.number().int().nonnegative(),
+            soloSessions: z.number().int().nonnegative(), campSessions: z.number().int().nonnegative() }).strict()) }).strict().optional()
 });
 
 export const upsertOpenSeedSchema = z.object({
@@ -25,7 +47,8 @@ export const startSoloSessionSchema = z.object({
 
 export const checkOutSchema = z.object({
     outcome: checkoutOutcomeSchema,
-    openSeed: z.string().trim().min(1).max(500).nullable().optional()
+    openSeed: z.string().trim().min(1).max(500).nullable().optional(),
+    studyStep: studyStepInputSchema.optional()
 }).strict();
 
 export const sessionParticipantSchema = z.object({
