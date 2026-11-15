@@ -36,7 +36,7 @@ async function preflight(key) {
     if (!model) throw new Error('Approved model not in account catalog: ' + id);
     return { id, name: model.name, pricing: model.pricing, discount: model.discount, rateLimits: model.rate_limits };
   });
-  const snapshot = { checkedAt: new Date().toISOString(), balanceVND: me.balance.totalVND, bonusVND: me.balance.bonusVND, plan: me.plan, models };
+  const snapshot = { checkedAt: new Date().toISOString(), balanceVND: me.balance.totalVND, bonusVND: me.balance.bonusVND, models };
   return { snapshot, usage };
 }
 async function main() {

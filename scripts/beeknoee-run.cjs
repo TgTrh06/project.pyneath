@@ -2,7 +2,17 @@ const fs = require('node:fs'), path = require('node:path');
 const { TrialBudget, reserveCost, MODELS } = require('./beeknoee-budget.cjs');
 const { credentials, preflight, management, root, apiRequire } = require('./beeknoee-trial.cjs');
 const cases = require('./beeknoee-cases.cjs');
+const latencyCases = require('./beeknoee-latency-cases.cjs');
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function probeScenario(format, caseId) {
+  const scenario = caseId ? latencyCases.find(item => item.id === caseId) : cases[0];
+  if (!scenario) throw new Error('Unknown latency case');
+  return { ...scenario, id: `probe-${format}-${caseId ?? 'default'}` };
+}
+function fixedScenario(caseId) {
+  return latencyCases.find(item => item.id === caseId) ?? cases.find(item => item.id === caseId);
+}
 
 function matchUsage(data, row, baselineIds) {
   if (!Array.isArray(data)) throw new Error('Invalid usage; stop');
@@ -28,7 +38,7 @@ async function reconcile(key, ledger, row, baselineIds, metadata) {
   throw new Error('No attributable usage yet; reservation retained; no further inference');
 }
 
-async function runOne({ model, format, phase, scenario, authorizedTools, generate }) {
+async function runOne({ model, format, phase, scenario, authorizedTools, generate, storeOutput = true }) {
   if (!MODELS.includes(model) || !['json_schema', 'json_object', 'prompt'].includes(format)) throw new Error('Unapproved trial configuration');
   const ledger = new TrialBudget(path.join(root, 'ledger.json'));
   let row;
@@ -62,13 +72,15 @@ async function runOne({ model, format, phase, scenario, authorizedTools, generat
       }
       return Response.json(value, { status: response.status });
     };
-    const config = readApiConfig({ API_ASSISTANCE_PROVIDER: 'beeknoee', BEEKNOEE_API_KEY: key, BEEKNOEE_MODEL: model, BEEKNOEE_RESPONSE_FORMAT: format, API_LOG_LEVEL: 'silent' });
+    const config = readApiConfig({ API_ASSISTANCE_PROVIDER: 'beeknoee', BEEKNOEE_API_KEY: key, BEEKNOEE_MODEL: model,
+      BEEKNOEE_RESPONSE_FORMAT: format, API_LOG_LEVEL: phase === 'compatibility' || phase === 'reserve' ? 'info' : 'silent' });
     const provider = new BeeknoeeAssistanceProvider(config, transport);
     const tools = authorizedTools ?? (scenario.context ? { names: Object.keys(scenario.context), read: async name => scenario.context[name] } : undefined);
     const started = performance.now(); let result;
     try { result = await (generate ?? provider.generate).call(provider, scenario.request, tools); }
     catch { result = { kind: 'error' }; }
-    const metadata = { ...wire, elapsedMs: Math.round(performance.now() - started), result: result.kind, capability: scenario.request.capability, ...(result.output ? { output: result.output } : {}) };
+    const metadata = { ...wire, elapsedMs: Math.round(performance.now() - started), result: result.kind, capability: scenario.request.capability,
+      ...(storeOutput && result.output ? { output: result.output } : {}) };
     if (!row) throw new Error('No inference sent; inspect pre-call guard');
     Object.assign(row, metadata); ledger.save();
     await reconcile(key, ledger, row, baselineIds, metadata);
@@ -93,7 +105,7 @@ async function main() {
     return;
   }
   const model = MODELS[Number(modelIndex)];
-  if (!model || !['probe', 'evaluate', 'reserve'].includes(command)) throw new Error('Usage: node scripts/beeknoee-run.cjs probe|evaluate|reserve 0|1 json_schema|json_object|prompt [case-id], or reconcile');
+  if (!model || !['probe', 'evaluate', 'reserve'].includes(command)) throw new Error('Usage: node scripts/beeknoee-run.cjs probe|evaluate|reserve 0|1 json_schema|json_object|prompt [latency-case-id], or reconcile');
   if (command === 'evaluate') {
     const data = JSON.parse(fs.readFileSync(path.join(root, 'ledger.json')));
     if (!data.attempts.some(row => row.phase === 'compatibility' && row.model === model && row.format === format && row.result === 'validated' && row.costVND !== null)) throw new Error('No successful compatibility evidence for this format');
@@ -107,10 +119,10 @@ async function main() {
       const previous = { json_object: 'json_schema', prompt: 'json_object' }[format];
       if (previous && !data.attempts.some(row => row.model === model && row.phase === 'compatibility' && row.format === previous && row.unsupportedFormat === true && row.costVND !== null)) throw new Error('Format downgrade requires explicit unsupported-format evidence');
     }
-    const scenario = command === 'probe' ? { ...cases[0], id: 'probe-' + format } : cases.find(item => item.id === caseId);
+    const scenario = command === 'probe' ? probeScenario(format, caseId) : fixedScenario(caseId);
     if (!scenario) throw new Error('Unknown fixed case');
-    await runOne({ model, format, phase: command === 'probe' ? 'compatibility' : 'reserve', scenario });
+    await runOne({ model, format, phase: command === 'probe' ? 'compatibility' : 'reserve', scenario, storeOutput: command === 'evaluate' });
   }
 }
-module.exports = { runOne, reconcile, matchUsage };
+module.exports = { runOne, reconcile, matchUsage, probeScenario, fixedScenario };
 if (require.main === module) main().catch(error => { console.error(error.message); process.exitCode = 1; });

@@ -109,14 +109,13 @@ async function one(client, scenario, phase, rows) {
   if (old.attempts.some(item => item.costVND === null)) throw new Error('Unreconciled charge; stop');
   const attemptId = `${phase}:${scenario.id}`;
   if (old.attempts.length >= MAX_CALLS || old.attempts.some(item => item.caseId === attemptId)) throw new Error('Call limit or duplicate case');
-  let route = '/me/assistance', body = scenario.request;
+  const route = '/me/assistance', body = scenario.request;
   if (scenario.selectedContext) {
     const text = scenario.selectedContext.get_my_open_seed.text;
     await client.request('/me/open-seed', 'PUT', { text });
-    const preview = await client.request('/me/assistance/tools/context');
-    const selected = preview.tools.find(item => item.name === 'get_my_open_seed');
-    if (selected?.data?.text !== text || !selected.consentToken) throw new Error('Selected context preview mismatch');
-    route += '/tools'; body = { request: scenario.request, grants: [{ name: selected.name, consentToken: selected.consentToken }] };
+  } else {
+    // Each case owns its context; do not carry the preceding case's Seed forward.
+    await client.request('/me/open-seed', 'DELETE', undefined, 204);
   }
   fs.writeFileSync(markerFile, JSON.stringify({ caseId: scenario.id, phase }), { flag: 'wx' });
   const started = performance.now();

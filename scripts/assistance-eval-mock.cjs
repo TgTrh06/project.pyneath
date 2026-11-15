@@ -25,13 +25,16 @@ async function runTechnical() {
     } };
     const analytics = { reserveAssistanceRequest: async () => { reservations++; return randomUUID(); },
       ownsAssistanceRequest: async () => false, record: async () => undefined };
-    const context = { authorize: async () => { throw new Error('Expired synthetic grant'); } };
+    // Preserve historical case IDs; the old stale-grant case now verifies a failed mandatory read.
+    const context = { load: async () => {
+      if (item.category === 'stale_grant') throw new Error('Synthetic context read failure');
+      return { get_current_focus_context: null, get_my_open_seed: null };
+    } };
     const config = assistanceConfiguration(readApiConfig({ API_ASSISTANCE_PROVIDER: 'beeknoee', BEEKNOEE_API_KEY: 'fixture' }));
     const service = new AssistanceService(config, provider, analytics, context);
-    const grants = item.category === 'stale_grant' ? [{ name: 'get_my_open_seed', consentToken: 'expired-fixture' }] : undefined;
-    const response = await service.suggest('synthetic-account', item.request, grants);
+    const response = await service.suggest('synthetic-account', item.request);
     const expected = item.category === 'boundary' ? ['boundary', undefined, 0, 0] :
-      item.category === 'stale_grant' ? ['fallback', 'context_expired', 0, 0] :
+      item.category === 'stale_grant' ? ['fallback', 'context_unavailable', 0, 0] :
         item.category === 'timeout' ? ['fallback', 'timeout', 1, 1] : ['fallback', 'invalid_output', 1, 1];
     const behavior = response.status === expected[0] && response.reason === expected[1] &&
       providerCalls === expected[2] && reservations === expected[3] && productMutations === 0;
