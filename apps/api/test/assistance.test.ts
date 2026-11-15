@@ -1,7 +1,9 @@
+import { emptyAssistanceContext } from './helpers/assistance-context';
 import { assistanceConfiguration } from '../src/modules/assistance/infrastructure/assistance-configuration';
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { Logger } from '@nestjs/common';
 import { assistanceDomainGuidance, assistanceRequestSchema, assistanceResponseSchema } from '@pyneath/contracts';
 import { safeProductMetadata } from '../src/modules/analytics/domain/event-policy';
 import type { Analytics } from '../src/modules/analytics/public-api';
@@ -22,7 +24,7 @@ function fixture(provider: AssistanceProvider, enabled = true, quota = true) {
     record: async (_accountId: string, name: string, subjectId?: string, metadata?: unknown) => { events.push({ name, subjectId, metadata }); }
   } as unknown as Analytics;
   const config = readApiConfig({ API_ASSISTANCE_PROVIDER: enabled ? 'openai' : 'disabled', OPENAI_API_KEY: enabled ? 'test-key' : undefined });
-  return { service: new AssistanceService(assistanceConfiguration(config), provider, analytics), events, reservations: () => reservations };
+  return { service: new AssistanceService(assistanceConfiguration(config), provider, analytics, emptyAssistanceContext), events, reservations: () => reservations };
 }
 
 test('assistance contract validates capability inputs and rejects private extra fields', () => {
@@ -95,12 +97,29 @@ test('versioned diagnostics are opt-in, coded, and report provider usage only wh
   const analytics = { reserveAssistanceRequest: async () => '00000000-0000-4000-8000-000000000001', ownsAssistanceRequest: async () => true,
     record: async (_accountId: string, name: string, _subjectId?: string, metadata?: unknown) => { events.push({ name, metadata }); } } as Analytics;
   const service = new AssistanceService(assistanceConfiguration(readApiConfig({ API_ASSISTANCE_PROVIDER: 'openai', OPENAI_API_KEY: 'test-key' })),
-    provider, analytics, undefined, { provider: 'beeknoee', model: 'bee/gpt-6-luna', diagnostics: true });
+    provider, analytics, emptyAssistanceContext, { provider: 'beeknoee', model: 'bee/gpt-6-luna', diagnostics: true });
   await service.suggest('owner', { capability: 'assisted_start', description: privateText });
   await service.interaction('owner', { capability: 'assisted_start', suggestionId: '00000000-0000-4000-8000-000000000001', action: 'discarded', reason: 'irrelevant' });
   assert.equal(events.find(event => event.name === 'assistance_result').metadata.promptTokens, 12);
   assert.equal(events.at(-1).metadata.reason, 'irrelevant');
   assert.equal(JSON.stringify(events).includes(privateText), false);
+});
+
+test('context timing logs contain only allowlisted diagnostic fields', async t => {
+  const messages: unknown[] = [];
+  t.mock.method(Logger.prototype, 'log', (message: unknown) => { messages.push(message); });
+  const analytics = { reserveAssistanceRequest: async () => '00000000-0000-4000-8000-000000000001', record: async () => {} } as unknown as Analytics;
+  const provider: AssistanceProvider = { generate: async () => ({ kind: 'validated', output: {
+    capability: 'assisted_start', version: '1', needsHumanSupport: false, fallback: 'manual_step', activationStep: 'Mở bài lập trình.', estimatedMinutes: 3
+  } }) };
+  const service = new AssistanceService(assistanceConfiguration(readApiConfig({ API_ASSISTANCE_PROVIDER: 'beeknoee', BEEKNOEE_API_KEY: 'fixture' })),
+    provider, analytics, { load: async () => { await new Promise(resolve => setTimeout(resolve, 2)); return emptyAssistanceContext.load('fixture'); } },
+    { provider: 'beeknoee', model: 'bee/gpt-6-luna', logging: metadata => new Logger(AssistanceService.name).log(metadata) });
+  await service.suggest('private-account', { capability: 'assisted_start', description: privateText });
+  const message = messages[0] as Record<string, unknown>;
+  assert.deepEqual(Object.keys(message).sort(), ['capability', 'elapsedMs', 'model', 'outcome', 'phase', 'provider'].sort());
+  assert.equal(message.phase, 'assistance_context'); assert.equal(message.capability, 'assisted_start'); assert.equal(message.outcome, 'ready');
+  assert.equal(JSON.stringify(message).includes(privateText), false); assert.equal(JSON.stringify(message).includes('private-account'), false);
 });
 
 test('provider rate limit has a distinct quota fallback', async () => {

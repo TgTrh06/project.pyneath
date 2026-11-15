@@ -1,6 +1,8 @@
+import { emptyAssistanceContext } from './helpers/assistance-context';
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { Logger } from '@nestjs/common';
 import { type AssistanceRequest } from '@pyneath/contracts';
 import { readApiConfig } from '../src/platform/config/api-config';
 import { BeeknoeeAssistanceProvider } from '../src/modules/assistance/infrastructure/beeknoee-assistance.provider';
@@ -72,6 +74,25 @@ test('each capability uses a single bounded JSON request, without OpenRouter-spe
   }
 });
 
+test('Beeknoee timing diagnostics separate authorized-context, transport phases, body parsing and schema validation', async t => {
+  const logs: unknown[] = [];
+  t.mock.method(Logger.prototype, 'log', (message: unknown) => { logs.push(message); });
+  t.mock.method(BeeknoeeHttpTransport.prototype, 'request', async (options: RequestInit) => {
+    const timed = options as RequestInit & { onTiming?: (timing: Record<string, number | boolean>) => void };
+    timed.onTiming?.({ dnsMs: 2, tcpMs: 3, tlsMs: 4, responseHeadersMs: 8, socketReused: false });
+    return Response.json(completion(step));
+  });
+  const candidate = new BeeknoeeAssistanceProvider(readApiConfig({ API_ASSISTANCE_PROVIDER: 'beeknoee', BEEKNOEE_API_KEY: 'fixture', API_LOG_LEVEL: 'info' }), new BeeknoeeHttpTransport());
+  await candidate.generate(input, { names: ['get_my_open_seed'], read: async () => ({ text: 'Fictional seed' }) });
+  const message = logs[0] as Record<string, unknown>;
+  for (const field of ['elapsedMs', 'calls', 'contextReadMs', 'dnsMs', 'tcpMs', 'tlsMs', 'responseHeadersMs', 'requestToHeadersMs', 'bodyJsonMs', 'schemaValidationMs']) {
+    assert.equal(typeof message[field], 'number', `missing numeric timing field ${field}`);
+  }
+  assert.equal(message.outcome, 'suggestion'); assert.equal(message.socketReused, false); assert.equal(message.modelVersion, 'bee/gpt-6-luna');
+  assert.equal(Object.hasOwn(message, 'prompt'), false); assert.equal(Object.hasOwn(message, 'response'), false);
+  t.mock.restoreAll();
+});
+
 test('Luna quality guard falls back on self-delegating steps without retrying or blocking grounded steps', async t => {
   assert.equal(isGenericAssistanceSuggestion('Viết ra một việc nhỏ nhất có thể làm ngay.'), true);
   assert.equal(isGenericAssistanceSuggestion('Chọn một bước tiếp theo.'), true);
@@ -95,7 +116,7 @@ test('Luna quality guard falls back on self-delegating steps without retrying or
   assert.equal(calls, 3, 'one provider call per user request');
 });
 
-test('only selected context is read once, included as untrusted data, without extra model calls', async t => {
+test('server-supplied context is read once, included as untrusted data, without extra model calls', async t => {
   const reads: string[] = []; let calls = 0;
   t.mock.method(BeeknoeeHttpTransport.prototype, 'request', async (options: RequestInit) => {
     calls++; const body = JSON.parse(String(options.body));
@@ -151,7 +172,7 @@ test('quota exhaustion and unavailable provider preserve the service fallback wi
   let calls = 0;
   t.mock.method(BeeknoeeHttpTransport.prototype, 'request', async () => { calls++; throw new Error('private provider detail'); });
   const analytics = { reserveAssistanceRequest: async () => null, record: async () => {} } as unknown as Analytics;
-  const service = new AssistanceService(assistanceConfiguration(config()), provider(), analytics);
+  const service = new AssistanceService(assistanceConfiguration(config()), provider(), analytics, emptyAssistanceContext);
   assert.equal((await service.suggest('owner', input)).status, 'fallback'); assert.equal(calls, 0);
   analytics.reserveAssistanceRequest = async () => 'a96f77d6-070b-4425-a095-c8e3009d39eb';
   const result = await service.suggest('owner', input); assert.equal(result.status, 'fallback');

@@ -3,7 +3,7 @@ import { assistanceResponseSchema, type AssistanceConfig, type AssistanceInterac
 import type { Analytics } from '../../analytics/public-api';
 import { ProviderRateLimitError, type AssistanceProvider, type ProviderUsage } from './assistance-provider';
 import type { AssistanceContextAccess } from './assistance-tools';
-import type { AssistanceToolRequest } from '@pyneath/contracts';
+import { assistanceContextSchema, type AssistanceContextSnapshot } from '@pyneath/contracts';
 
 import { boundaryWords, boundaryMessage, fallbackMessage, requestText } from '../domain/assistance-policy';
 import { assistancePromptRevision } from '@pyneath/contracts';
@@ -13,8 +13,8 @@ export class AssistanceService {
     private readonly config: AssistanceConfig,
     private readonly provider: AssistanceProvider,
     private readonly analytics: Analytics,
-    private readonly context?: AssistanceContextAccess,
-    private readonly version?: { provider: string; model: string; promptRevision?: string; policyRevision?: string; diagnostics?: boolean }
+    private readonly context: AssistanceContextAccess,
+    private readonly version?: { provider: string; model: string; promptRevision?: string; policyRevision?: string; diagnostics?: boolean; logging?: (metadata: Record<string, string | number>) => void }
   ) { }
 
   configuration(): AssistanceConfig { return { ...this.config, capabilities: [...this.config.capabilities] }; }
@@ -27,7 +27,7 @@ export class AssistanceService {
     });
   }
 
-  async suggest(accountId: string, input: AssistanceRequest, grants?: AssistanceToolRequest['grants']): Promise<AssistanceResponse> {
+  async suggest(accountId: string, input: AssistanceRequest): Promise<AssistanceResponse> {
     const started = performance.now();
     const resultEvent = (outcome: string, usage?: ProviderUsage) => !this.version?.diagnostics ? Promise.resolve() : this.analytics.record(accountId, 'assistance_result', undefined, {
       capability: input.capability, outcome, provider: this.version?.provider ?? 'unknown', model: this.version?.model ?? 'unknown',
@@ -39,10 +39,29 @@ export class AssistanceService {
     if (boundaryWords.test(text)) { await resultEvent('boundary'); return this.fallback(input.capability, true); }
     if (!this.configuration().capabilities.includes(input.capability)) { await resultEvent('fallback'); return this.fallback(input.capability, false); }
     try {
-      if (grants && !this.context) { await resultEvent('fallback'); return this.fallback(input.capability, false); }
-      let tools;
-      try { tools = grants ? await this.context!.authorize(accountId, grants) : undefined; }
-      catch { await resultEvent('context_expired'); return this.fallback(input.capability, false, 'context_expired'); }
+      let snapshot: AssistanceContextSnapshot;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const contextStarted = performance.now();
+      let contextOutcome = 'unavailable';
+      try {
+        // Read fresh account-owned data before reserving quota or contacting a provider.
+        snapshot = assistanceContextSchema.parse(await Promise.race([
+          this.context.load(accountId),
+          new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Context deadline')), 3000); })
+        ]));
+        contextOutcome = 'ready';
+      } catch {
+        await resultEvent('context_unavailable');
+        return this.fallback(input.capability, false, 'context_unavailable');
+      } finally {
+        clearTimeout(timeout);
+        this.version?.logging?.({ phase: 'assistance_context', capability: input.capability,
+          provider: this.version.provider, model: this.version.model,
+          elapsedMs: Math.round(performance.now() - contextStarted), outcome: contextOutcome });
+      }
+      if (boundaryWords.test(JSON.stringify(snapshot))) { await resultEvent('boundary'); return this.fallback(input.capability, true); }
+      const tools = { names: ['get_current_focus_context', 'get_my_open_seed'] as Array<keyof AssistanceContextSnapshot>,
+        read: async (name: keyof AssistanceContextSnapshot) => structuredClone(snapshot[name]) };
       const suggestionId = await this.analytics.reserveAssistanceRequest(accountId, input.capability);
       if (!suggestionId) {
         await this.analytics.record(accountId, 'assistance_fallback', undefined, { capability: input.capability });

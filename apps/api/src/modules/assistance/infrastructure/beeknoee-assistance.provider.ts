@@ -39,30 +39,35 @@ export class BeeknoeeAssistanceProvider implements AssistanceProvider {
     const controller = new AbortController(), started = performance.now();
     const timer = setTimeout(() => controller.abort(), 12000);
     let outcome = 'provider_error', calls = 0;
+    const timings: Record<string, number | boolean> = {};
     let usage: z.infer<typeof completionSchema>['usage'];
     const eventUsage = () => usage ? { promptTokens: usage.prompt_tokens, completionTokens: usage.completion_tokens, costUsd: usage.cost } : undefined;
     const usageFields = () => usage ? { usage: eventUsage() } : {};
     const abort = new Promise<never>((_, reject) => controller.signal.addEventListener('abort', () => reject(new Error('Assistance deadline')), { once: true }));
     const run = async (): Promise<ProviderResult> => {
       if (!this.config.BEEKNOEE_API_KEY) throw new Error('Beeknoee not configured');
-      // The application resolves the user's grants once, before the single model call.
+      // The application supplies the account-owned snapshot before the single model call.
       // The model has no executable tools and cannot expand the authorized context.
       const context: Record<string, unknown> = {};
       if (tools) {
         if (tools.names.length > 2 || new Set(tools.names).size !== tools.names.length) throw new Error('Invalid context');
+        const contextStarted = performance.now();
         const names = tools.names.map(name => assistanceToolNameSchema.parse(name));
         for (const name of names) {
           controller.signal.throwIfAborted();
           context[name] = await tools.read(name);
         }
+        timings.contextReadMs = Math.round(performance.now() - contextStarted);
         if (Buffer.byteLength(JSON.stringify(context), 'utf8') > 8192) throw new Error('Context too large');
         if (boundaryWords.test(JSON.stringify(context))) return { kind: 'boundary' };
       }
       controller.signal.throwIfAborted();
       calls++;
+      const requestStarted = performance.now();
       const response = await this.http.request({
         method: 'POST', signal: controller.signal, redirect: 'error',
         headers: { Authorization: `Bearer ${this.config.BEEKNOEE_API_KEY}`, 'Content-Type': 'application/json', 'User-Agent': 'Pyneath/0.1' },
+        onTiming: timing => Object.assign(timings, timing),
         body: JSON.stringify({
           model: this.config.BEEKNOEE_MODEL, stream: false, max_tokens: 512,
 
@@ -75,14 +80,21 @@ export class BeeknoeeAssistanceProvider implements AssistanceProvider {
             : this.config.BEEKNOEE_RESPONSE_FORMAT === 'json_object' ? { response_format: { type: 'json_object' } } : {}),
         }),
       });
+      timings.requestToHeadersMs = Math.round(performance.now() - requestStarted);
       if (!response.ok) { await response.body?.cancel(); outcome = response.status === 429 ? 'quota' : 'provider_error'; throw response.status === 429 ? new ProviderRateLimitError() : new Error('Beeknoee unavailable'); }
       outcome = 'schema_rejection';
-      const result = completionSchema.parse(await readBoundedJson(response));
+      const bodyStarted = performance.now();
+      let result: z.infer<typeof completionSchema>;
+      try { result = completionSchema.parse(await readBoundedJson(response)); }
+      finally { timings.bodyJsonMs = Math.round(performance.now() - bodyStarted); }
       usage = result.usage;
       const choice = result.choices[0];
       if (choice.finish_reason === 'content_filter' || choice.message.refusal) { outcome = 'boundary'; return { kind: 'boundary', ...usageFields() }; }
       if (choice.finish_reason !== 'stop' || !choice.message.content || choice.message.tool_calls?.length) throw new Error('Incomplete Beeknoee response');
-      const output = parseLocalOutput(input, JSON.parse(choice.message.content));
+      const validationStarted = performance.now();
+      let output: ReturnType<typeof parseLocalOutput>;
+      try { output = parseLocalOutput(input, JSON.parse(choice.message.content)); }
+      finally { timings.schemaValidationMs = Math.round(performance.now() - validationStarted); }
       if (output.needsHumanSupport) { outcome = 'boundary'; return { kind: 'boundary', ...usageFields() }; }
       if (output.message !== undefined) { outcome = 'fallback'; return { kind: 'fallback', ...usageFields() }; }
       if (this.config.API_ASSISTANCE_QUALITY_V2 === 'true' &&
@@ -96,6 +108,7 @@ export class BeeknoeeAssistanceProvider implements AssistanceProvider {
       clearTimeout(timer);
       if (this.config.API_LOG_LEVEL !== 'silent') this.logger.log({ capability: input.capability, modelVersion: this.config.BEEKNOEE_MODEL,
         elapsedMs: Math.round(performance.now() - started), calls, outcome: controller.signal.aborted ? 'timeout' : outcome,
+        ...timings,
         ...(usage ? { promptTokens: usage.prompt_tokens, completionTokens: usage.completion_tokens, costUsd: usage.cost } : {}) });
     }
   }

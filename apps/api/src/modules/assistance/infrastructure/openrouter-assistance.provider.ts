@@ -33,7 +33,7 @@ export class OpenRouterAssistanceProvider implements AssistanceProvider {
     const abort = new Promise<never>((_, reject) => controller.signal.addEventListener('abort', () => reject(new Error('Assistance deadline')), { once: true }));
     const run = async (): Promise<ProviderResult> => {
       if (!this.config.OPENROUTER_API_KEY) throw new Error('OpenRouter not configured');
-      // The application resolves the user's grants once, before the single model call.
+      // The application supplies the account-owned snapshot before the single model call.
       // The model has no executable tools and cannot expand the authorized context.
       const context: Record<string, unknown> = {};
       if (tools) {

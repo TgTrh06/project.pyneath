@@ -15,7 +15,7 @@ export function safeProductMetadata(name: ProductEventName, metadata: EventMetad
         if (capability !== 'assisted_start' && capability !== 'open_seed_draft' && capability !== 'stuck_recovery') return {};
         if (name === 'assistance_result') {
             const outcome = metadata?.outcome;
-            if (!['suggestion', 'fallback', 'boundary', 'quota', 'context_expired', 'timeout', 'provider_error', 'invalid_output'].includes(String(outcome))) return {};
+            if (!['suggestion', 'fallback', 'boundary', 'quota', 'context_unavailable', 'timeout', 'provider_error', 'invalid_output'].includes(String(outcome))) return {};
             const base: EventMetadata = { capability, outcome };
             for (const field of ['provider', 'model', 'promptRevision', 'policyRevision'] as const) {
                 const value = metadata[field];
