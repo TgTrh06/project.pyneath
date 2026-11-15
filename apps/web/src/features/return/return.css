@@ -165,7 +165,6 @@
 .return-page { container-type:inline-size; }
 .return-context { display:grid; gap:24px; min-width:0; align-content:start; }
 .forest-shell-return .return-context > .assistance-coach { min-width:0; margin:0; padding:20px; border:1px solid var(--line); border-radius:var(--radius-panel); background:var(--surface); }
-.return-main > .return-composer { max-width:760px; }
 @container (min-width:800px) {
   .forest-shell-return .return-grid { grid-template-columns:minmax(0,1fr) minmax(320px,.8fr); }
 }

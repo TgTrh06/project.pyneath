@@ -17,12 +17,12 @@ export function makeAssistanceRequest(capability: AssistanceCapability, value: s
     : { capability, currentStep: text, stuckMode };
 }
 export function assistanceDisclosure(processing: AssistanceConfig['processing'], provider?: string) {
-  if (provider === 'beeknoee') return 'Bản demo: chỉ nhập dữ liệu giả. Nội dung bạn gửi và ngữ cảnh bạn chọn được chuyển qua Beeknoee tới nhà cung cấp chạy mô hình để tạo gợi ý. AI có thể gợi ý chưa phù hợp; hãy kiểm tra và sửa trước khi dùng. Không gửi thông tin riêng tư hoặc nhạy cảm.';
-  if (provider === 'openrouter') return 'AI có thể gợi ý chưa phù hợp. Nội dung bạn gửi và ngữ cảnh bạn chọn được chuyển qua OpenRouter tới nhà cung cấp chạy DeepSeek để tạo gợi ý. Hãy kiểm tra và sửa trước khi dùng; không gửi thông tin nhạy cảm.';
-  if (provider === 'gemini') return 'Bản demo: chỉ nhập dữ liệu giả. Nội dung bạn gửi và ngữ cảnh bạn chọn có thể được chuyển tới Google Gemini. Với API free tier, Google có thể dùng đầu vào và phản hồi để cải thiện sản phẩm. Không gửi thông tin riêng tư hoặc nhạy cảm.';
+  if (provider === 'beeknoee') return 'Bản demo: chỉ nhập dữ liệu giả. Nội dung bạn gửi và ngữ cảnh hiện có của bạn được chuyển qua Beeknoee tới nhà cung cấp chạy mô hình để tạo gợi ý. AI có thể gợi ý chưa phù hợp; hãy kiểm tra và sửa trước khi dùng. Không gửi thông tin riêng tư hoặc nhạy cảm.';
+  if (provider === 'openrouter') return 'AI có thể gợi ý chưa phù hợp. Nội dung bạn gửi và ngữ cảnh hiện có của bạn được chuyển qua OpenRouter tới nhà cung cấp chạy DeepSeek để tạo gợi ý. Hãy kiểm tra và sửa trước khi dùng; không gửi thông tin nhạy cảm.';
+  if (provider === 'gemini') return 'Bản demo: chỉ nhập dữ liệu giả. Nội dung bạn gửi và ngữ cảnh hiện có của bạn có thể được chuyển tới Google Gemini. Với API free tier, Google có thể dùng đầu vào và phản hồi để cải thiện sản phẩm. Không gửi thông tin riêng tư hoặc nhạy cảm.';
   return processing === 'self_hosted'
-    ? 'Bản demo: chỉ nhập dữ liệu giả. Nội dung vừa nhập được gửi đến máy chủ Pyneath để tạo gợi ý.'
-    : 'Bản demo: chỉ nhập dữ liệu giả. Nội dung vừa nhập được gửi tới dịch vụ AI bên ngoài để tạo gợi ý. Không gửi thông tin riêng tư hoặc nhạy cảm.';
+    ? 'Bản demo: chỉ nhập dữ liệu giả. Nội dung bạn nhập và ngữ cảnh hiện có của bạn được gửi đến máy chủ Pyneath để tạo gợi ý.'
+    : 'Bản demo: chỉ nhập dữ liệu giả. Nội dung bạn nhập và ngữ cảnh hiện có của bạn được gửi tới dịch vụ AI bên ngoài để tạo gợi ý. Không gửi thông tin riêng tư hoặc nhạy cảm.';
 }
 
 export interface AssistanceState {

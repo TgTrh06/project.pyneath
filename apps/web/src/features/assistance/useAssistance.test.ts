@@ -3,10 +3,10 @@ import type { AssistanceResponse } from '@pyneath/contracts';
 import { ApiRequestError } from '../../shared/api/transport';
 import type { createHookHarness } from '../../tests/hookHarness';
 const h = vi.hoisted(() => ({ hooks: null as ReturnType<typeof createHookHarness> | null,
-  config: vi.fn(), request: vi.fn(), track: vi.fn(), toolsConfig: vi.fn(), context: vi.fn(), toolsRequest: vi.fn() }));
+  config: vi.fn(), request: vi.fn(), track: vi.fn(), toolsConfig: vi.fn() }));
 vi.mock('react', async () => { const { createHookHarness } = await import('../../tests/hookHarness'); h.hooks = createHookHarness(); return h.hooks.react; });
 vi.mock('../../shared/api/clients/assistance', () => ({ getAssistanceConfig: h.config, requestAssistance: h.request, recordAssistanceInteraction: h.track,
-  getAssistanceToolsConfig: h.toolsConfig, getAssistanceContext: h.context, requestAssistanceWithTools: h.toolsRequest }));
+  getAssistanceToolsConfig: h.toolsConfig }));
 
 beforeEach(() => {
   h.hooks?.reset(); vi.clearAllMocks(); vi.stubEnv('VITE_ASSISTANCE_DEMO', 'true');
@@ -19,41 +19,16 @@ const flush = async () => { await Promise.resolve(); await Promise.resolve(); };
 const suggestion: AssistanceResponse = { status: 'suggestion', suggestionId: 'f9194eb2-3b02-47da-97fe-9ac81a6095ca',
   output: { capability: 'stuck_recovery', version: '1', needsHumanSupport: false, recoveryAction: 'smaller_step', recoveryStep: 'Mở tài liệu giả.', fallback: 'manual_step' } };
 
-it.each(['openrouter', 'beeknoee'])('%s previews locally, sends only selected grants, and ignores late results after consent changes', async provider => {
+it.each(['openrouter', 'beeknoee', 'gemini', 'openai', 'local'])('%s requests assistance without a context selection step', async provider => {
   const { useAssistance } = await import('./useAssistance');
   h.toolsConfig.mockResolvedValue({ enabled: true, provider, tools: ['get_current_focus_context', 'get_my_open_seed'] });
-  h.context.mockResolvedValue({ tools: [
-    { name: 'get_current_focus_context', data: null, consentToken: 'focus-consent' },
-    { name: 'get_my_open_seed', data: { text: 'Fictional private seed' }, consentToken: 'seed-consent' }
-  ] });
+  h.request.mockResolvedValue(suggestion);
   const onChoose = vi.fn();
   const render = () => h.hooks!.render(() => useAssistance({ capability: 'stuck_recovery', value: 'Việc giả', onChoose }));
-  render(); await flush(); await render().loadContext();
-  expect(render().selectedTools).toEqual([]); expect(h.request).not.toHaveBeenCalled(); expect(h.toolsRequest).not.toHaveBeenCalled();
-  h.request.mockResolvedValue(suggestion); await render().ask(); expect(h.request).toHaveBeenCalledTimes(1);
-  render().toggleTool('get_my_open_seed', true); render();
-  let resolve!: (value: AssistanceResponse) => void;
-  h.toolsRequest.mockImplementation(() => new Promise<AssistanceResponse>(done => { resolve = done; }));
-  const pending = render().ask();
-  expect(h.toolsRequest.mock.calls[0][0]).toEqual({ request: { capability: 'stuck_recovery', currentStep: 'Việc giả', stuckMode: 'too_large' },
-    grants: [{ name: 'get_my_open_seed', consentToken: 'seed-consent' }] });
-  expect(JSON.stringify(h.toolsRequest.mock.calls)).not.toContain('Fictional private seed');
-  render().toggleTool('get_my_open_seed', false); render(); resolve(suggestion); await pending;
-  expect(render().visibleResult).toBeNull(); expect(onChoose).not.toHaveBeenCalled();
-  render().toggleTool('get_my_open_seed', true); render(); await render().loadContext();
-  expect(render().selectedTools).toEqual([]);
-});
-
-it('keeps manual input and direct assistance available if tools config or context fails', async () => {
-  const { useAssistance } = await import('./useAssistance');
-  h.toolsConfig.mockResolvedValue({ enabled: true, provider: 'gemini', tools: ['get_my_open_seed'] });
-  h.context.mockRejectedValue(new Error('fixture unavailable')); h.request.mockResolvedValue(suggestion);
-  const onChoose = vi.fn();
-  const render = () => h.hooks!.render(() => useAssistance({ capability: 'stuck_recovery', value: 'Giữ nguyên bản nháp', onChoose }));
-  render(); await flush(); await render().loadContext();
-  expect(render().contextError).toContain('Chưa đọc'); expect(render().selectedTools).toEqual([]);
-  await render().ask(); expect(h.request).toHaveBeenCalledTimes(1); expect(h.toolsRequest).not.toHaveBeenCalled();
-  expect(onChoose).not.toHaveBeenCalled();
+  render(); await flush(); expect(h.request).not.toHaveBeenCalled();
+  await render().ask();
+  expect(h.request).toHaveBeenCalledExactlyOnceWith({ capability: 'stuck_recovery', currentStep: 'Việc giả', stuckMode: 'too_large' });
+  expect(render().visibleResult?.status).toBe('suggestion'); expect(onChoose).not.toHaveBeenCalled();
 });
 
 it('ignores an in-flight response after input/mode changes or unmount, and suppresses duplicate requests', async () => {
@@ -90,20 +65,17 @@ it('allows editing, explicit selection and dismissal without saving or starting 
   breakDisabled = false; render().takeBreak(); expect(onTakeBreak).toHaveBeenCalledTimes(1);
 });
 
-it('clears stale selected context after a fallback without changing manual text', async () => {
+it('keeps manual input on context failure and only retries on another user request', async () => {
   const { useAssistance } = await import('./useAssistance');
-  h.toolsConfig.mockResolvedValue({ enabled: true, provider: 'beeknoee', tools: ['get_my_open_seed'] });
-  h.context.mockResolvedValue({ tools: [{ name: 'get_my_open_seed', data: { text: 'Seed giả' }, consentToken: 'fixture-grant' }] });
-  h.toolsRequest.mockResolvedValue({ status: 'fallback', reason: 'context_expired',
-    output: { capability: 'stuck_recovery', version: '1', needsHumanSupport: false,
-      message: 'Chưa thể tạo gợi ý.', fallback: 'manual_step' } });
+  h.request.mockResolvedValue({ status: 'fallback', reason: 'context_unavailable',
+    output: { capability: 'stuck_recovery', version: '1', needsHumanSupport: false, message: 'Chưa thể tạo gợi ý.', fallback: 'manual_step' } });
   const onChoose = vi.fn(), value = 'Nội dung thủ công';
   const render = () => h.hooks!.render(() => useAssistance({ capability: 'stuck_recovery', value, onChoose }));
-  render(); await flush(); await render().loadContext(); render().toggleTool('get_my_open_seed', true); render();
-  await render().ask();
-  expect(render().selectedTools).toEqual([]); expect(render().context).toBeNull();
-  expect(render().contextError).toContain('chọn lại'); expect(render().visibleResult).toBeNull();
-  expect(onChoose).not.toHaveBeenCalled();
+  render(); await flush(); await render().ask();
+  expect(render().visibleResult?.reason).toBe('context_unavailable');
+  expect(h.request).toHaveBeenCalledTimes(1); expect(onChoose).not.toHaveBeenCalled();
+  h.request.mockResolvedValue(suggestion); await render().ask();
+  expect(render().visibleResult?.status).toBe('suggestion'); expect(h.request).toHaveBeenCalledTimes(2);
 });
 
 it('retains user input and the manual path on timeout, invalid schema and mismatched capability', async () => {

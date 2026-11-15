@@ -6,42 +6,24 @@ import './assistance.css';
 
 export function AssistanceCoach(props: AssistanceOptions) {
   const { capability, value, disabled = false, breakDisabled = false, onTakeBreak, onValueChange } = props;
-  const { available, config, toolsConfig, context, contextPending, contextError, selectedTools, loadContext, toggleTool,
+  const { available, config, toolsConfig,
     mode, setMode, visibleResult, draft, pending, error, feedbackReason, setFeedbackReason, trigger, proposalInput, ask, dismiss, choose, takeBreak, editDraft } = useAssistance(props);
   if (!available || !config) return null;
   return <section className="assistance-coach" aria-label={assistanceLabels[capability]}>
     <div className="assistance-coach__intro"><strong>Gợi ý khi cần</strong><p className="field-hint">{assistanceDisclosure(config.processing, toolsConfig?.provider)}</p></div>
-    {toolsConfig?.enabled && <fieldset className="assistance-coach__context">
-      <legend>Ngữ cảnh cho gợi ý (không bắt buộc)</legend>
-      <p className="field-hint">Chỉ mục được bạn chọn bên dưới mới có thể gửi tới dịch vụ AI khi bấm yêu cầu gợi ý. AI chỉ đọc; không tự lưu hoặc đổi phiên.</p>
-      <button type="button" className="text-action" disabled={disabled || contextPending || pending} onClick={() => void loadContext()}>{contextPending ? 'Đang đọc ngữ cảnh…' : context ? 'Đọc lại ngữ cảnh' : 'Xem ngữ cảnh của tôi'}</button>
-      {contextPending && <p role="status">Đang đọc từ Pyneath; chưa gửi tới dịch vụ AI.</p>}
-      {contextError && <p role="alert">{contextError}</p>}
-      {context?.tools.map(tool => <div key={tool.name} className="assistance-coach__context-item">
-        <label><input type="checkbox" checked={selectedTools.includes(tool.name)} disabled={disabled || contextPending}
-          onChange={event => toggleTool(tool.name, event.target.checked)} />Cho phép gửi {tool.name === 'get_current_focus_context' ? 'phiên hiện tại' : 'Open Seed của tôi'}</label>
-        {tool.name === 'get_current_focus_context' ? tool.data ? <p>
-          {tool.data.kind === 'solo' ? 'Solo' : 'Pact'} · {tool.data.durationMinutes} phút · Đang diễn ra · {({ active: 'Đang tập trung', break: 'Đang nghỉ', disconnected: 'Mất kết nối' } as const)[tool.data.presence]}<br />
-          Kết thúc: {new Date(tool.data.endsAt).toLocaleString('vi-VN')}<br />
-          Việc của tôi: {tool.data.intention ?? 'Chưa nhập nội dung'}
-        </p> : <p>Không có phiên đang diễn ra.</p>
-          : <p>{tool.data?.text ?? 'Chưa có Open Seed.'}</p>}
-      </div>)}
-      {context && <p className="field-hint">Quyền dùng ngữ cảnh hết hạn sau 5 phút. Nếu nội dung đã đổi, hãy đọc lại và chọn lại.</p>}
-    </fieldset>}
     {capability === 'stuck_recovery' && onValueChange && <label>Việc đang vướng<textarea value={value} maxLength={280} onChange={event => onValueChange(event.target.value)} placeholder="Mô tả bước bạn đang muốn tiếp tục" /></label>}
     {capability === 'stuck_recovery' && <SelectMenu label="Điều gì đang làm bạn mắc kẹt?" value={mode} onChange={value => setMode(value as StuckMode)} disabled={disabled} options={[
       { value: 'too_large', label: 'Việc đang quá lớn' }, { value: 'unclear_next_step', label: 'Chưa rõ bước tiếp theo' },
       { value: 'distracted', label: 'Khó giữ tập trung' }, { value: 'low_energy', label: 'Đang ít năng lượng' }
     ]}/>}
-    <div className="assistance-coach__request"><p className="field-hint">Hãy nêu tên việc hoặc màn hình đang làm và điều bạn muốn làm tiếp; một câu ngắn là đủ.</p>
+    <div className="assistance-coach__request"><p className="field-hint">AI sẽ dùng nội dung bạn nhập, phiên tập trung hiện tại và điểm tiếp tục của bạn để tạo gợi ý.</p><p className="field-hint">Hãy nêu tên việc hoặc màn hình đang làm và điều bạn muốn làm tiếp; một câu ngắn là đủ.</p>
     <button ref={trigger} type="button" className="text-action" disabled={disabled || pending || !value.trim()} onClick={() => void ask()}>{pending ? 'Đang tạo gợi ý…' : visibleResult?.status === 'suggestion' ? 'Yêu cầu gợi ý khác' : assistanceLabels[capability]}</button>
     {pending && <p role="status">Đang tạo bản nháp. Bạn vẫn có thể tự viết tiếp.</p>}
     {error && <p role="alert">{error}</p>}
     {visibleResult?.status !== 'suggestion' && visibleResult?.output.message && <p role="status">{
       visibleResult.status === 'boundary' ? visibleResult.output.message
         : visibleResult.reason === 'quota' ? 'Hôm nay đã hết lượt gợi ý. Nội dung bạn nhập vẫn ở đây; hãy tự viết tiếp.'
-          : visibleResult.reason === 'context_expired' ? 'Ngữ cảnh đã thay đổi hoặc quyền chọn hết hạn. Hãy xem và chọn lại; nội dung bạn nhập vẫn ở đây.'
+          : visibleResult.reason === 'context_unavailable' ? 'Chưa đọc được ngữ cảnh nên AI chưa tạo gợi ý. Hãy thử lại; nội dung bạn nhập vẫn ở đây.'
             : visibleResult.reason === 'invalid_output' ? 'Gợi ý vừa tạo chưa dùng được. Nội dung bạn nhập vẫn ở đây; hãy tự viết tiếp hoặc yêu cầu gợi ý mới.'
               : visibleResult.reason === 'timeout' ? 'Dịch vụ AI phản hồi quá lâu. Nội dung bạn nhập vẫn ở đây; hãy tự viết tiếp hoặc thử lại.'
                 : visibleResult.reason === 'unavailable' ? 'Dịch vụ AI đang không khả dụng. Nội dung bạn nhập vẫn ở đây; hãy tự viết tiếp hoặc thử lại sau.'
