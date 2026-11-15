@@ -56,7 +56,7 @@ export const assistanceResponseSchema = z.object({
   status: z.enum(["suggestion", "fallback", "boundary"]),
   output: assistanceOutputSchema,
   suggestionId: idSchema.optional(),
-  reason: z.enum(['quota', 'context_expired', 'invalid_output', 'timeout', 'unavailable']).optional()
+  reason: z.enum(['quota', 'context_unavailable', 'invalid_output', 'timeout', 'unavailable']).optional()
 }).strict().superRefine((response, context) => {
   if (response.reason && response.status !== 'fallback') context.addIssue({ code: 'custom', message: 'Reason requires fallback' });
   if (response.status === "suggestion" && (!response.suggestionId || response.output.message || response.output.needsHumanSupport)) context.addIssue({ code: "custom", message: "Invalid suggestion response" });
