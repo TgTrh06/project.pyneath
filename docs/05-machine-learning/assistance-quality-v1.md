@@ -4,7 +4,7 @@
 
 ## Quyền điều khiển và UX khi sai
 
-AI chỉ trả đề xuất sau khi người dùng bấm yêu cầu. Người dùng tự chọn Focus/Seed để gửi, xem, sửa, dùng hoặc bỏ. Chọn “dùng” chỉ chép bản nháp vào ô đang soạn; bắt đầu/kết thúc/nghỉ phiên, checkout và lưu Seed vẫn là thao tác riêng. Không tự retry. Văn bản người dùng đang nhập phải được giữ sau mọi lỗi.
+AI chỉ trả đề xuất sau khi người dùng bấm yêu cầu. Mỗi lần yêu cầu, backend tự đọc phiên hiện tại và Open Seed của chính tài khoản để gửi kèm; dữ liệu chưa có được biểu diễn bằng `null`. Người dùng xem, sửa, dùng hoặc bỏ bản nháp. Xem [ADR-0033](../04-engineering/adr/0033-required-assistance-context.md). Chọn “dùng” chỉ chép bản nháp vào ô đang soạn; bắt đầu/kết thúc/nghỉ phiên, checkout và lưu Seed vẫn là thao tác riêng. Không tự retry. Văn bản người dùng đang nhập phải được giữ sau mọi lỗi.
 
 | Trạng thái | Hiển thị và hành động tiếp theo | Điều kiện kiểm tra |
 | --- | --- | --- |
@@ -12,11 +12,11 @@ AI chỉ trả đề xuất sau khi người dùng bấm yêu cầu. Người d�
 | Gợi ý sai | Cho sửa/dùng/bỏ hoặc bấm yêu cầu mới. Khi bỏ, có thể chọn một mã: không liên quan, quá lớn/chưa cụ thể, khó hiểu, không phù hợp, khác. | Không có ô phản hồi tự do; không lưu/khởi động tự động. |
 | Timeout/mất dịch vụ | Nêu nội dung còn nguyên; tự viết tiếp hoặc chủ động thử lại. | Không tự gọi lại. |
 | Hết quota | Nêu hết lượt hôm nay; tiếp tục thủ công. | Không gọi provider khi quota hết. |
-| Ngữ cảnh hết hạn/đã đổi | Bỏ quyền chọn cũ; yêu cầu xem/chọn lại. | Không gửi grant cũ; không mất nội dung. |
+| Không đọc được ngữ cảnh | Báo chưa tạo gợi ý; chủ động thử lại hoặc tiếp tục viết. | Không gọi provider, không trừ lượt; không mất nội dung. |
 | JSON/đầu ra sai | Bỏ gợi ý lỗi; cho viết tiếp hoặc chủ động yêu cầu mới. | Schema và policy vẫn chặn mọi đầu ra. |
 | Ranh giới an toàn | Thông báo hỗ trợ phù hợp, không hiển thị như bước làm việc. | Không chấp nhận gợi ý hành động thường. |
 
-Kiểm tra bàn phím: Tab tới nút yêu cầu, chọn context, textarea, lý do bỏ và nút bỏ/dùng; sau thao tác, focus trở về nút hoặc bản nháp dự kiến. Kiểm tra màn 320px và sáng/tối; trạng thái dùng chữ và `role=status`/`role=alert`, không chỉ màu. Screen reader thực tế là cổng nghiệm thu riêng trước pilot; DOM/ARIA tự động không thay thế được việc nghe bằng thiết bị đọc màn hình.
+Kiểm tra bàn phím: Tab tới nút yêu cầu, textarea, lý do bỏ và nút bỏ/dùng; sau thao tác, focus trở về nút hoặc bản nháp dự kiến. Kiểm tra màn 320px và sáng/tối; trạng thái dùng chữ và `role=status`/`role=alert`, không chỉ màu. Screen reader thực tế là cổng nghiệm thu riêng trước pilot; DOM/ARIA tự động không thay thế được việc nghe bằng thiết bị đọc màn hình.
 
 ## Bộ eval v1 và rubric
 
