@@ -1,6 +1,6 @@
 # AI Assistance: UX, đánh giá và cải tiến phiên bản
 
-**Trạng thái 2026-11-13:** kế hoạch chất lượng cho demo thực tập local. Provider được chọn là Beeknoee `bee/gpt-6-luna`, định dạng `json_schema`. Bằng chứng 9 case Luna trước đây là [lịch sử thử model](../07-testing/beeknoee-trial-readiness.md), không phải holdout độc lập hay kết quả của bộ 60 case này. Chưa chạy inference mới, pilot người dùng thật hoặc deploy trong đợt triển khai tài liệu này.
+**Trạng thái 2026-11-13:** kế hoạch chất lượng cho demo thực tập local. Provider được chọn là Beeknoee `bee/gpt-6-luna`, định dạng `json_schema`. Bằng chứng 9 case Luna trước đây là [lịch sử thử model](../07-testing/beeknoee-trial-readiness.md), không phải holdout độc lập. Đợt [đánh giá v1](../07-testing/assistance-quality-v1-results.md) sau đó đã chạy 48 ca nội dung có phí và 12 ca kỹ thuật mock; người chấm độc lập, pilot và deploy vẫn chưa thực hiện.
 
 ## Quyền điều khiển và UX khi sai
 
@@ -33,7 +33,7 @@ Mốc nội bộ: không có lỗi quyền truy cập/tự đổi dữ liệu ng
 
 Trước inference thật: phê duyệt riêng số lượt, ngân sách, dữ liệu giả, số dư và điều kiện dừng. Dùng mock cho phần lớn case kỹ thuật. Không chạy bộ 60 case trả phí tự động. Sau khi có response giả/được duyệt, tạo JSON gồm `manifest` và `results`; chạy `node scripts/assistance-eval-report.cjs <reviewed-results.json>` sau `pnpm build`. Manifest bắt buộc: `datasetVersion`, `casebookSha256`, `provider`, `model`, `promptRevision`, `policyRevision`, `codeRevision`, `configuration` (chỉ tên mode/limit, không chứa khóa), `runAt`, `reviewer`. Mỗi result có `id`, `human`, `schema`, `capability`, `policy`, `authorization`, `manualControl`; giá trị là `pass`, `fail`, `not_run`. `response`, `latencyMs`, `promptTokens`, `completionTokens`, `costUsd`, `unresolved` là tùy chọn. Reporter tự chấm schema/capability/policy khi có `response`, loại response khỏi báo cáo xuất và giữ từng dòng ID. Thiếu usage không tính là 0 USD thực tế: báo riêng số case có cost; latency cũng ghi mẫu số. Lưu response chỉ với dữ liệu giả trong khu vực eval được duyệt, không đưa prompt/response vào telemetry sản phẩm.
 
-So sánh hai bản trên **cùng ID/split**, ghi tổng, từng chức năng, tỷ lệ lỗi kỹ thuật, median latency, chi phí provider báo và sai lệch chưa giải quyết. Prompt Luna hiện là `pyneath-assistance-v2.1-beeknoee-v1` (prompt dùng chung v2.1 cùng chỉ dẫn riêng adapter); policy là `assistance-policy-v1`. Chốt một giả thuyết sửa mỗi vòng, tăng revision khi sửa prompt/policy, chạy regression và holdout, ghi trước/sau rồi giữ hoặc rollback. Không dùng log hành vi ẩn danh làm dữ liệu huấn luyện nội dung.
+So sánh hai bản trên **cùng ID/split**, ghi tổng, từng chức năng, tỷ lệ lỗi kỹ thuật, median latency, chi phí provider báo và sai lệch chưa giải quyết. Baseline v1 đã chạy với prompt `pyneath-assistance-v2.1-beeknoee-v1` và policy `assistance-policy-v1`; [ứng viên v2](../07-testing/assistance-quality-v2-readiness.md) dùng revision mới và chưa chạy inference. Chốt một giả thuyết sửa mỗi vòng, tăng revision khi sửa prompt/policy, chạy regression và holdout, ghi trước/sau rồi giữ hoặc rollback. Không dùng log hành vi ẩn danh làm dữ liệu huấn luyện nội dung.
 
 ## Telemetry và quyền dữ liệu
 
