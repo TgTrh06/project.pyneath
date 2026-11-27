@@ -1,2 +1,12 @@
-import { ReturnScene } from '../return/scene-api';
-export function AuthLoading(){return <ReturnScene place="auth">{()=> <main className="site-shell forest-shell forest-auth"><div className="forest-auth-loading" role="status"><img src="/marten/3d/rest.webp" width="88" height="68" alt=""/><p>Đang mở khoảng riêng của bạn…</p></div></main>}</ReturnScene>}
+import { MartenMascot } from '../../shared/components/marten/MartenMascot';
+
+export function AuthLoading() {
+  return (
+    <main className="site-shell forest-shell forest-auth">
+      <div className="forest-auth-loading" role="status">
+        <MartenMascot size="md" pose="rest" />
+        <p>Đang mở khoảng riêng của bạn…</p>
+      </div>
+    </main>
+  );
+}

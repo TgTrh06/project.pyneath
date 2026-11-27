@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { SiteHeader } from "../../shared/components/site/SiteHeader";
 import { SiteFooter } from "../../shared/components/site/SiteFooter";
+import { MartenMascot } from "../../shared/components/marten/MartenMascot";
 import "./landing.css";
 import { TrailPreview } from "./TrailPreview";
 import { useRevealOnce } from "./useRevealOnce";
-import { LandingScene } from "./LandingScene";
 import "./landing-forest.css";
 
 export function LandingPage({ signedIn = false }: { signedIn?: boolean }) {
@@ -24,7 +24,7 @@ export function LandingPage({ signedIn = false }: { signedIn?: boolean }) {
 
   return <div ref={landingRef} className="landing landing-forest public-page" id="home">
     <a className="skip-link" href="#landing-main">Đến nội dung chính</a>
-    <LandingScene>{controls => <SiteHeader signedIn={signedIn} showTheme={false} actions={controls} />}</LandingScene>
+    <SiteHeader signedIn={signedIn} showTheme={true} />
 
     <main id="landing-main" tabIndex={-1}>
       <section className="lp-hero lp-container" aria-labelledby="lp-title">
@@ -32,7 +32,7 @@ export function LandingPage({ signedIn = false }: { signedIn?: boolean }) {
         <div className="lp-hero-grid"><div className="lp-hero-copy">
           <h1 id="lp-title">Không cần làm hết.<br /><span>Một bước thôi.</span></h1>
           <div className="lp-hero-aside">
-            <p className="lp-intro">Một góc tự học cho học sinh, sinh viên: chọn một bước nhỏ, dành cho nó vài phút rồi quay lại khi sẵn sàng.</p>
+            <p className="lp-intro">Một góc tự học và quản lý nhịp độ cho học sinh, sinh viên: chọn một bước nhỏ, dành cho nó vài phút rồi quay lại khi sẵn sàng.</p>
             <a className="lp-button" href={entryHref}>{cta}</a>
             <p className="lp-caption">{signedIn ? "Một khoảng yên để tiếp tục hành trình." : "Tạo tài khoản Wanderer để bắt đầu."}</p>
           </div>
@@ -54,15 +54,18 @@ export function LandingPage({ signedIn = false }: { signedIn?: boolean }) {
 
       <section className="lp-return" id="experience" tabIndex={-1} aria-labelledby="lp-return-title">
         <div className="lp-container lp-return-inner">
-          <div className="lp-return-copy"><p className="lp-kicker">MỘT NƠI ĐỂ QUAY LẠI</p><h2 id="lp-return-title">Một góc riêng.<br /><em>Hoặc cùng nhau.</em></h2><p>Ngồi dưới gốc tùng cùng Marten, hoặc tạo Camp riêng và hẹn một chặng cùng người quen. Mỗi người làm việc của mình; nội dung công việc vẫn riêng tư.</p><p className="lp-return-signoff">Bạn chọn nhịp của mình. Không streak, không bảng xếp hạng.</p></div>
-          <figure className="lp-rest-preview"><img src="/solo/solo-poster-dusk.webp" alt="Một người ngồi dưới gốc tùng, Marten ngủ bên cạnh ánh đèn lồng." width="1600" height="1000" loading="lazy" /><figcaption>Một góc riêng dưới tán tùng. Từng chút một.</figcaption></figure>
+          <div className="lp-return-copy"><p className="lp-kicker">MỘT NƠI ĐỂ QUAY LẠI</p><h2 id="lp-return-title">Một góc riêng.<br /><em>Hoặc cùng nhau.</em></h2><p>Đồng hành cùng Marten trong không gian làm việc tinh gọn, hoặc tạo Camp riêng và hẹn một chặng cùng người quen. Mỗi người làm việc của mình; nội dung công việc vẫn riêng tư.</p><p className="lp-return-signoff">Bạn chọn nhịp của mình. Nhẹ nhàng, rõ ràng, không áp lực.</p></div>
+          <figure className="lp-rest-preview" style={{ display: 'grid', placeItems: 'center', padding: '40px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)' }}>
+            <MartenMascot size="lg" pose="happy" label="Mascot Marten của Pyneath" />
+            <figcaption>Marten đồng hành cùng bạn trong từng bước nhỏ.</figcaption>
+          </figure>
         </div>
       </section>
 
       <section className="lp-before lp-container" id="before-you-start" tabIndex={-1} aria-labelledby="lp-before-title">
         <div><p className="lp-kicker">TRƯỚC KHI BẮT ĐẦU</p><h2 id="lp-before-title">Một vài điều<br />nói rõ với nhau.</h2><p>Pyneath đang được phát triển. Đây là lời mời trải nghiệm những bước đầu.</p></div>
         <div className="lp-questions">
-          <details><summary>Tài khoản Wanderer có gì?</summary><p>Tài khoản Wanderer có <strong className="lp-highlight">các phiên Focus riêng</strong>, <strong className="lp-highlight">Open Seed để ghi lại điểm bắt đầu lần sau</strong>, cùng <strong className="lp-highlight">dấu chân và kỷ niệm cá nhân</strong>. Bạn cũng có thể tạo <strong className="lp-highlight">Camp riêng</strong> để hẹn <strong className="lp-highlight">các phiên Focus cùng người quen</strong>. <strong className="lp-highlight">Khi hỗ trợ AI được bật</strong>, bạn có thể xin gợi ý một bước để bắt đầu, cách tiếp tục hoặc một câu Open Seed; <strong className="lp-highlight">hãy xem và chỉnh bản nháp trước khi chọn dùng</strong>. Khối tương tác phía trên là minh họa dựng sẵn, không lưu dữ liệu hay tạo gợi ý bằng AI.</p></details>
+          <details><summary>Tài khoản Wanderer có gì?</summary><p>Tài khoản Wanderer có <strong className="lp-highlight">các phiên Focus riêng</strong>, <strong className="lp-highlight">Open Seed để ghi lại điểm bắt đầu lần sau</strong>, cùng <strong className="lp-highlight">dấu chân và kỷ niệm cá nhân</strong>. Bạn cũng có thể tạo <strong className="lp-highlight">Camp riêng</strong> để hẹn <strong className="lp-highlight">các phiên Focus cùng người quen</strong>. <strong className="lp-highlight">Khi hỗ trợ AI được bật</strong>, bạn có thể xin gợi ý một bước để bắt đầu, cách tiếp tục hoặc một câu Open Seed; <strong className="lp-highlight">hãy xem và chỉnh bản nháp trước khi chọn dùng</strong>.</p></details>
           <details><summary>Pyneath có thay thế hỗ trợ chuyên môn không?</summary><p>Không. Pyneath hỗ trợ tự quản lý và tập trung; <strong className="lp-highlight">không chẩn đoán, điều trị hay đưa ra tư vấn y khoa</strong>.</p></details>
           <details><summary>Có cần làm xong khi hết giờ?</summary><p><strong className="lp-highlight">Không cần.</strong> Đồng hồ khép lại một chặng, <strong className="lp-highlight">không đánh giá kết quả</strong>. Bạn có thể <strong className="lp-highlight">để lại điểm tiếp tục rồi quay lại khi sẵn sàng</strong>.</p></details>
         </div>

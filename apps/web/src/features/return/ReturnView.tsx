@@ -19,8 +19,10 @@ import type { SoundId } from '../focus/controls-api';
 import { draftOwner, writePrivateDraft } from '../../shared/auth/privateDrafts';
 import { FirstTimeHint } from '../../shared/components/FirstTimeHint';
 
+import { MartenMascot } from "../../shared/components/marten/MartenMascot";
+
 function ReturnNote({ children }: { children: ReactNode }) {
-  return <div className="return-marten-note"><img src="/return/marten.webp" width="88" height="72" alt=""/><p>{children}</p></div>;
+  return <div className="return-marten-note"><MartenMascot size="sm" pose="idle" /><p>{children}</p></div>;
 }
 
 const loadReturn = async () => {
