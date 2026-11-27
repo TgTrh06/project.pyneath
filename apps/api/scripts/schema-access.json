@@ -182,5 +182,32 @@
     ],
     "kind": "foreign_key",
     "reason": "Existing foreign-key references; no schema definition changes."
+  },
+  {
+    "source": "modules/planner/infrastructure/planner.schema.ts",
+    "target": "modules/identity/infrastructure/identity.schema.ts",
+    "imports": [
+      "accounts"
+    ],
+    "kind": "foreign_key",
+    "reason": "Account ownership and cascade delete for planner items."
+  },
+  {
+    "source": "modules/habits/infrastructure/habits.schema.ts",
+    "target": "modules/identity/infrastructure/identity.schema.ts",
+    "imports": [
+      "accounts"
+    ],
+    "kind": "foreign_key",
+    "reason": "Account ownership and cascade delete for habits and logs."
+  },
+  {
+    "source": "modules/rag/infrastructure/rag.schema.ts",
+    "target": "modules/identity/infrastructure/identity.schema.ts",
+    "imports": [
+      "accounts"
+    ],
+    "kind": "foreign_key",
+    "reason": "Account ownership and cascade delete for RAG documents, chunks, and chat history."
   }
 ]

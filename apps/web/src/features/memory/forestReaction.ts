@@ -1,9 +1,10 @@
 import type { ForestThreshold, PersonalMilestone } from '@pyneath/contracts';
-import type { MartenPose } from '../../shared/scene/martenPoses';
-import type { MartenAction } from '../../shared/scene/forestActivity';
+
+export type MartenReactionPose = 'look-back' | 'stand' | 'stretch';
+export type MartenReactionAction = 'look' | 'sniff' | 'stretch';
 
 export const forestReactionDuration = 3600;
-export const forestReactions: Record<ForestThreshold, { pose: MartenPose; action: MartenAction }> = {
+export const forestReactions: Record<ForestThreshold, { pose: MartenReactionPose; action: MartenReactionAction }> = {
   1: { pose: 'look-back', action: 'look' },
   3: { pose: 'stand', action: 'sniff' },
   7: { pose: 'stretch', action: 'stretch' },
