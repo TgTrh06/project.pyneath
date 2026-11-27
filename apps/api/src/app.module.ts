@@ -14,6 +14,9 @@ import { PresenceModule } from './modules/presence/presence.module';
 import { MemoryModule } from './modules/memory/memory.module';
 import { AssistanceModule } from './modules/assistance/assistance.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
+import { PlannerModule } from './modules/planner/planner.module';
+import { HabitsModule } from './modules/habits/habits.module';
+import { RagModule } from './modules/rag/rag.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
     PrivacyModule,
     AssistanceModule,
     PreferencesModule,
+    PlannerModule,
+    HabitsModule,
+    RagModule,
   ],
 })
 export class AppModule {}

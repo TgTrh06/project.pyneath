@@ -2,7 +2,7 @@ name: ${PYNEATH_COMPOSE_PROJECT:-pyneath-local}
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_DB: ${PYNEATH_POSTGRES_DB:-pyneath_review}
       POSTGRES_USER: ${PYNEATH_POSTGRES_USER:-pyneath_local}
