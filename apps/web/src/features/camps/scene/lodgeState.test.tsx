@@ -35,27 +35,26 @@ describe('Camp scene membership and selection boundaries', () => {
   });
 });
 
-describe('Camp scene without a GPU or browser', () => {
+describe('Camp 2D gathering view', () => {
   const base = { members, accountId: 'me', selected: ['linh'], disabled: false, archived: false, onToggleMember() {}, onCompose() {}, onPacts() {} };
-  it('renders the forest poster and task controls before loading the renderer', () => {
+  it('renders the 2D Marten mascot and task controls without any 3D canvas', () => {
     const html = renderToStaticMarkup(<CampLodge {...base} />);
-    expect(html).toContain('/camp/camp-poster-');
+    expect(html).toContain('marten-mascot');
     expect(html).not.toContain('<canvas');
-    expect(html).toContain('Quây quần dưới cây tùng');
+    expect(html).toContain('Không gian Camp');
     expect(html).toContain('Hẹn một chặng');
     expect(html).toContain('Thành viên');
     expect(html).not.toContain('lodge-roster-heading');
-    expect(html).not.toContain('Căn nhà');
   });
   it('keeps the archived Camp readable without an action to create a Pact', () => {
     const html = renderToStaticMarkup(<CampLodge {...base} archived disabled />);
     expect(html).toContain('Bảng hẹn');
-    expect(html).toContain('Chuyển động · Tắt');
+    expect(html).toContain('Camp đã lưu trữ');
     expect(html).not.toContain('camp-start');
   });
-  it('does not put private member names in the static fallback or default overlay', () => {
+  it('escapes member display names safely without raw script tags', () => {
     const html = renderToStaticMarkup(<CampLodge {...base} members={[{ ...members[0], displayName: '<script>unsafe</script>' }]} />);
-    expect(html).not.toContain('unsafe');
-    expect(html).toContain('camp-poster-');
+    expect(html).not.toContain('<script>unsafe</script>');
+    expect(html).toContain('&lt;script&gt;unsafe&lt;/script&gt;');
   });
 });

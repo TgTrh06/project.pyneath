@@ -1,0 +1,68 @@
+.habits-page {
+  display: grid;
+  gap: 20px;
+}
+.habits-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.habits-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 20px;
+}
+.habits-form {
+  display: grid;
+  gap: 12px;
+}
+.habits-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.habit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+.habit-row__info {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.habit-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: .78rem;
+  color: var(--muted);
+}
+.habit-streak-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 600;
+}
+.habit-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+@media (max-width: 900px) {
+  .habits-grid {
+    grid-template-columns: 1fr;
+  }
+}

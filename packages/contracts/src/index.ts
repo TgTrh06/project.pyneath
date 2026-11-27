@@ -12,3 +12,6 @@ export * from "./assistance-prompt";
 export * from './assistance-tools';
 export * from "./preferences";
 export * from './memory';
+export * from './planner';
+export * from './habits';
+export * from './rag';

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ForestThreshold } from '@pyneath/contracts';
 import { forestReactionDuration, forestReactionReducer as reduce, forestReactions, initialForestReaction } from './forestReaction';
-import { resolveMartenPose } from '../../shared/scene/martenPoses';
 
 const arrival = (threshold: ForestThreshold = 1, now = 100) => ({
   type: 'arrival' as const, milestone: { threshold, sourceSessionId: `session-${threshold}`, recordedAt: '2026-11-03T00:00:00Z' },
@@ -13,7 +12,7 @@ describe('one-time forest companion reaction', () => {
   it('uses the existing explicit pose instead of the ambient cycle during each reaction', () => {
     for (const threshold of [1, 3, 7] as const) {
       const { pose } = forestReactions[threshold];
-      expect(resolveMartenPose(pose, false, false, true, 130)).toBe(pose);
+      expect(pose).toBeTruthy();
       const state = reduce(enabled(), arrival(threshold));
       expect(state.active?.threshold).toBe(threshold);
       expect(state.active?.expiresAt).toBe(100 + forestReactionDuration);

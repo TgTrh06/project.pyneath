@@ -1,0 +1,108 @@
+.planner-page {
+  display: grid;
+  gap: 20px;
+}
+.planner-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.planner-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.planner-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 20px;
+}
+.planner-form {
+  display: grid;
+  gap: 12px;
+}
+.planner-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.planner-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.planner-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.planner-item {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+.planner-item[data-status="done"] {
+  opacity: 0.72;
+}
+.planner-item__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.planner-item__title {
+  font-weight: 600;
+  font-size: .95rem;
+}
+.planner-item[data-status="done"] .planner-item__title {
+  text-decoration: line-through;
+}
+.planner-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: .75rem;
+}
+.planner-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.planner-badge--high {
+  border-color: var(--chestnut);
+  color: var(--chestnut);
+}
+.planner-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.planner-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-control);
+  background: var(--wash);
+}
+@media (max-width: 900px) {
+  .planner-grid {
+    grid-template-columns: 1fr;
+  }
+}

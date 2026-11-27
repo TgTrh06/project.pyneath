@@ -1,9 +1,92 @@
-.marten-illustration { position:relative; display:block; flex-shrink:0; line-height:0; }
-.marten-illustration__sprite { display:block; width:100%; height:100%; object-fit:contain; image-rendering:auto; }
-.marten-illustration__pupil { position:absolute; left:36.8%; top:51.45%; width:2.2%; height:2.32%; background:#433f38; image-rendering:auto; will-change:transform; }
-.marten-note { display:flex; align-items:center; gap:.75rem; margin-block:1rem 1.5rem; }
-.marten-note__figure { width:88px; height:72px; flex:0 0 88px; pointer-events:none; }
-.marten-note__figure--sit { width:64px; height:55px; flex-basis:64px; }
-.marten-note p { margin:0; font-size:.9375rem; line-height:1.6; color:var(--muted); overflow-wrap:anywhere; }
-.marten-note__name { display:block; font-family:var(--font-pixel); font-size:.875rem; font-weight:600; color:var(--chestnut); margin-bottom:.125rem; }
-@media(max-width:380px) { .marten-note__figure { width:72px; height:42px; flex-basis:72px; } .marten-note__figure--sit { width:56px; height:48px; flex-basis:56px; } }
+.marten-mascot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.marten-mascot__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.marten-mascot--xs { width: 32px; height: 28px; }
+.marten-mascot--sm { width: 52px; height: 46px; }
+.marten-mascot--md { width: 72px; height: 64px; }
+.marten-mascot--lg { width: 104px; height: 92px; }
+
+.marten-mascot__tail {
+  transform-origin: 66px 60px;
+  animation: marten-tail-sway 3.6s ease-in-out infinite;
+}
+.marten-mascot__eyes {
+  transform-origin: 45px 31.5px;
+  animation: marten-blink 5.5s ease-in-out infinite;
+}
+.marten-mascot--thinking .marten-mascot__head {
+  transform-origin: 45px 42px;
+  animation: marten-tilt 2.8s ease-in-out infinite;
+}
+.marten-mascot--happy .marten-mascot__svg {
+  animation: marten-hop 1.4s ease-in-out infinite;
+}
+.marten-mascot--thinking .marten-mascot__thought circle {
+  animation: marten-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes marten-tail-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(6deg); }
+}
+@keyframes marten-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+@keyframes marten-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-4deg); }
+}
+@keyframes marten-hop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes marten-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marten-mascot__tail,
+  .marten-mascot__eyes,
+  .marten-mascot__head,
+  .marten-mascot__svg,
+  .marten-mascot__thought circle {
+    animation: none;
+  }
+}
+
+.marten-note {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-block: 1rem 1.5rem;
+}
+.marten-note__figure {
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.marten-note p {
+  margin: 0;
+  font-size: .9375rem;
+  line-height: 1.6;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.marten-note__name {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--chestnut);
+  margin-bottom: .125rem;
+}
